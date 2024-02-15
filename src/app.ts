@@ -1,78 +1,44 @@
-import { children } from "cheerio/lib/api/traversing";
+import { buildJailbirds } from "./services/scraperService";
 
 const axios = require("axios");
 const cheerio = require("cheerio");
+const mongoose = require("mongoose");
+const {
+  findAllJailbirds,
+  createJailbird,
+  deleteJailbird,
+  updateJailbird,
+} = require("./services/jailbirdService");
+const { downloadFile } = require("./services/fileDownloadService");
 
-const inmatesPageURL = "https://webapp01.richmondnc.com/dcn/inmates";
+const mongoURL =
+  "mongodb+srv://wblevins:&AMsEsKzzo2K5&oi@jailbirds.55zx0ek.mongodb.net/jailbirds?retryWrites=true&w=majority";
 
-const getInmateProfileURL = (listPage, inmateElement) => {
-  const children = listPage(inmateElement).children();
-  const result = children.find("a").attr("href");
-  let inmateProfileURL = `https://webapp01.richmondnc.com${result}`;
-  const url = inmateProfileURL.replace("%3d&amp", "&");
-  return url;
+mongoose.connect(mongoURL);
+
+const run = async () => {
+  console.log("scraping jailbird web page...");
+  const pageJailbirds = await buildJailbirds();
+
+  console.log("fetching jailbirds from database...");
+  const dbJailbirds = await findAllJailbirds();
+
+  console.log("checking for new jailbirds...");
+  const newJailbirds = pageJailbirds.filter(
+    ({ name: pageName }) =>
+      !dbJailbirds.some(({ value: dbName }) => dbName === pageName)
+  );
+
+  console.log("new jailbirds detected:");
+  console.log(`${JSON.stringify(newJailbirds)}`);
+
+  // TODO: write the code that downloads the mugshots to the mugshots dir
+  newJailbirds.forEach(async (newJailbird, ndx: number) => {
+    console.log(`downloading mugshot: ${newJailbird.picture}`);
+    await downloadFile(newJailbird.picture, ndx);
+  });
 };
 
-const getNameFromProfilePage = (profile) => {
-  const name = profile("#HeaderText");
-  return name.first().text();
-};
+run();
 
-const createChargesStr = (charges: string) => {
-  let groomedCharges = charges.replace(/\t/g, "");
-  groomedCharges = groomedCharges.replace(/\n\n/g, ", ");
-  return groomedCharges.trim();
-};
-
-const getProfilePicFromProfilePage = (profile) => {
-  const mugshotImg = profile("#mugShotImg");
-  return `https://webapp01.richmondnc.com/DCN/${mugshotImg[0].attribs.src}`;
-};
-
-const buildJailbirds = async () => {
-  try {
-    const response = await axios.get(inmatesPageURL);
-    // console.log(response.data);
-
-    // scrape web page and get list of all inmates
-    const inmateListPage = await cheerio.load(response.data);
-
-    inmateListPage(".dxgvDataRow_MaterialCompact").each(
-      async (ndx: number, inmateElement) => {
-        const inmateProfileURL = getInmateProfileURL(
-          inmateListPage,
-          inmateElement
-        );
-
-        let profileResponse = await axios.get(inmateProfileURL);
-        const profile = await cheerio.load(profileResponse.data);
-
-        const name = getNameFromProfilePage(profile);
-
-        const charges = profile(
-          "#ChargeGrid_DXMainTable tr td:nth-of-type(1) a"
-        );
-
-        // assemble the jailbird's charges
-        let chargesText: string = charges.text();
-        const groomedCharges = createChargesStr(chargesText);
-
-        // attach the mugshot image
-        const profilePic = getProfilePicFromProfilePage(profile);
-
-        // build the inmate object
-        const inmateObj = {
-          name,
-          charges: groomedCharges,
-          picture: profilePic,
-        };
-
-        console.log(inmateObj);
-      }
-    );
-  } catch (e: any) {
-    console.error("oopsie whoopsie!");
-  }
-};
-
-buildJailbirds();
+export {};
