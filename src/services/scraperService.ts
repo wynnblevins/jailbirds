@@ -27,6 +27,12 @@ const getProfilePicFromProfilePage = (profile) => {
   return `https://webapp01.richmondnc.com/DCN/${mugshotImg[0].attribs.src}`;
 };
 
+const getInmateIDFromProfilePage = (profile) => {
+  const mugshotImg = profile("#mugShotImg");
+  const ids = mugshotImg[0].attribs.src.split("id=")[1];
+  return ids.split("&")[0];
+};
+
 export const buildJailbirds = async () => {
   try {
     const jailbirds = [];
@@ -59,8 +65,11 @@ export const buildJailbirds = async () => {
       // attach the mugshot image
       const profilePic = getProfilePicFromProfilePage(profile);
 
+      const inmateID = getInmateIDFromProfilePage(profile);
+
       // build the inmate object
       const inmateObj = {
+        inmateID,
         name,
         charges: groomedCharges,
         picture: profilePic,

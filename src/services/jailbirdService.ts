@@ -9,11 +9,13 @@ const findJailbirdById = async (id: string) => {
 };
 
 const createJailbird = async (
+  inmateID: string,
   name: string,
   charges: string,
   picture: string
 ) => {
   const jailbird = new Jailbird({
+    inmateID: inmateID,
     name: name,
     charges: charges,
     picture: picture,

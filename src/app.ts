@@ -24,18 +24,24 @@ const run = async () => {
   const dbJailbirds = await findAllJailbirds();
 
   console.log("checking for new jailbirds...");
-  const newJailbirds = pageJailbirds.filter(
-    ({ name: pageName }) =>
-      !dbJailbirds.some(({ value: dbName }) => dbName === pageName)
+  const newJailbirds = pageJailbirds?.filter(
+    ({ inmateID: pageID }) =>
+      !dbJailbirds?.some(({ inmateID: dbID }) => {
+        return dbID === pageID;
+      })
   );
-
-  console.log("new jailbirds detected:");
-  console.log(`${JSON.stringify(newJailbirds)}`);
 
   // TODO: write the code that downloads the mugshots to the mugshots dir
   newJailbirds.forEach(async (newJailbird, ndx: number) => {
     console.log(`downloading mugshot: ${newJailbird.picture}`);
     await downloadFile(newJailbird.picture, ndx);
+
+    createJailbird(
+      newJailbird.inmateID,
+      newJailbird.name,
+      newJailbird.charges,
+      newJailbird.picture
+    );
   });
 };
 
