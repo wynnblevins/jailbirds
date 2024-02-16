@@ -1,5 +1,4 @@
-import { buildJailbirds } from "./services/scraperService";
-
+require("dotenv").config();
 const axios = require("axios");
 const cheerio = require("cheerio");
 const mongoose = require("mongoose");
@@ -9,10 +8,10 @@ const {
   deleteJailbird,
   updateJailbird,
 } = require("./services/jailbirdService");
+const buildJailbirds = require("./services/scraperService");
 const { downloadFile } = require("./services/fileDownloadService");
 
-const mongoURL =
-  "mongodb+srv://wblevins:&AMsEsKzzo2K5&oi@jailbirds.55zx0ek.mongodb.net/jailbirds?retryWrites=true&w=majority";
+const mongoURL = `mongodb+srv://${process.env.MONGO_USERNAME}:${process.env.MONGO_PASSWORD}@jailbirds.55zx0ek.mongodb.net/jailbirds?retryWrites=true&w=majority`;
 
 mongoose.connect(mongoURL);
 
@@ -22,6 +21,8 @@ const run = async () => {
 
   console.log("fetching jailbirds from database...");
   const dbJailbirds = await findAllJailbirds();
+
+  console.log(dbJailbirds);
 
   console.log("checking for new jailbirds...");
   const newJailbirds = pageJailbirds?.filter(
