@@ -1,14 +1,10 @@
 require("dotenv").config();
-const axios = require("axios");
-const cheerio = require("cheerio");
 const mongoose = require("mongoose");
 const {
   findAllJailbirds,
   createJailbird,
-  deleteJailbird,
-  updateJailbird,
 } = require("./services/jailbirdService");
-const buildJailbirds = require("./services/scraperService");
+const { buildJailbirds } = require("./services/scraperService");
 const { downloadFile } = require("./services/fileDownloadService");
 
 const mongoURL = `mongodb+srv://${process.env.MONGO_USERNAME}:${process.env.MONGO_PASSWORD}@jailbirds.55zx0ek.mongodb.net/jailbirds?retryWrites=true&w=majority`;
