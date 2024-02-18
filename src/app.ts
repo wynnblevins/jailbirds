@@ -6,8 +6,9 @@ const {
 } = require("./services/jailbirdService");
 const { buildJailbirds } = require("./services/scraperService");
 const { downloadFile } = require("./services/fileDownloadService");
+const { postToInsta } = require('./services/instagramPostService');
 
-const mongoURL = `mongodb+srv://${process.env.MONGO_USERNAME}:${process.env.MONGO_PASSWORD}@cluster0.boa43ki.mongodb.net/?retryWrites=true&w=majority`;
+const mongoURL = `mongodb+srv://${process.env.MONGO_USERNAME}:${process.env.MONGO_PASSWORD}@cluster0.boa43ki.mongodb.net/${process.env.DATABASE_NAME}?retryWrites=true&w=majority`;
 
 mongoose.connect(mongoURL);
 
@@ -40,6 +41,8 @@ const run = async () => {
       newJailbird.charges,
       newJailbird.picture
     );
+
+    postToInsta()
   });
 
   process.exit();

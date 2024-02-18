@@ -5,5 +5,11 @@ const { get } = require("request-promise");
 const postToInsta = async () => {
   const ig = new IgApiClient();
   ig.state.generateDevice(process.env.IG_USERNAME);
-  await ig.account.login(process.env.IG_USERNAME, process.env.IG_PASSWORD);
+
+  try {
+    await ig.account.login(process.env.IG_USERNAME, process.env.IG_PASSWORD);
+    console.log('Instagram login successful');
+  } catch (e: any) {
+    console.log(e)
+  }
 };
