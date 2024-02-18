@@ -7,7 +7,7 @@ const {
 const { buildJailbirds } = require("./services/scraperService");
 const { downloadFile } = require("./services/fileDownloadService");
 
-const mongoURL = `mongodb+srv://${process.env.MONGO_USERNAME}:${process.env.MONGO_PASSWORD}@jailbirds.55zx0ek.mongodb.net/jailbirds?retryWrites=true&w=majority`;
+const mongoURL = `mongodb+srv://${process.env.MONGO_USERNAME}:${process.env.MONGO_PASSWORD}@cluster0.boa43ki.mongodb.net/?retryWrites=true&w=majority`;
 
 mongoose.connect(mongoURL);
 
@@ -28,7 +28,8 @@ const run = async () => {
       })
   );
 
-  // TODO: write the code that downloads the mugshots to the mugshots dir
+  console.log(`New Jailbirds: ${JSON.stringify(newJailbirds)}`);
+
   newJailbirds.forEach(async (newJailbird, ndx: number) => {
     console.log(`downloading mugshot: ${newJailbird.picture}`);
     await downloadFile(newJailbird.picture, ndx);
@@ -40,6 +41,8 @@ const run = async () => {
       newJailbird.picture
     );
   });
+
+  process.exit();
 };
 
 run();
