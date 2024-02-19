@@ -5,8 +5,16 @@ const {
   createJailbird,
 } = require("./services/jailbirdService");
 const { buildJailbirds } = require("./services/scraperService");
-const { downloadFile } = require("./services/fileDownloadService");
 const { postToInsta } = require('./services/instagramPostService');
+
+require("dotenv").config();
+
+interface Jailbird {
+  inmateID: String,
+  name: String,
+  charges: String,
+  picture: String
+}
 
 const mongoURL = `mongodb+srv://${process.env.MONGO_USERNAME}:${process.env.MONGO_PASSWORD}@cluster0.boa43ki.mongodb.net/${process.env.DATABASE_NAME}?retryWrites=true&w=majority`;
 
@@ -31,10 +39,9 @@ const run = async () => {
 
   console.log(`New Jailbirds: ${JSON.stringify(newJailbirds)}`);
 
-  newJailbirds.forEach(async (newJailbird, ndx: number) => {
-    console.log(`downloading mugshot: ${newJailbird.picture}`);
-    await downloadFile(newJailbird.picture, ndx);
+  const jailbirdsToPost = [];
 
+  newJailbirds.forEach(async (newJailbird, ndx: number) => {
     createJailbird(
       newJailbird.inmateID,
       newJailbird.name,
@@ -42,12 +49,19 @@ const run = async () => {
       newJailbird.picture
     );
 
-    postToInsta()
+    const jailbird: Jailbird = {
+      inmateID: newJailbird.inmateID,
+      name: newJailbird.name,
+      charges: newJailbird.charges,
+      picture: newJailbird.picture
+    };
+
+    jailbirdsToPost.push(jailbird)
   });
 
-  process.exit();
+  await postToInsta(jailbirdsToPost);
 };
 
 run();
 
-export {};
+export { Jailbird };
