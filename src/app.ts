@@ -38,10 +38,10 @@ const run = async () => {
   );
 
   console.log(`New Jailbirds: ${JSON.stringify(newJailbirds)}`);
-
+ 
   const jailbirdsToPost = [];
 
-  newJailbirds.forEach(async (newJailbird, ndx: number) => {
+  newJailbirds?.forEach(async (newJailbird: Jailbird, ndx: number) => {
     createJailbird(
       newJailbird.inmateID,
       newJailbird.name,
@@ -62,6 +62,10 @@ const run = async () => {
   await postToInsta(jailbirdsToPost);
 };
 
-run();
+run().then(() => {
+  process.exit(); 
+});
+
+
 
 export { Jailbird };
