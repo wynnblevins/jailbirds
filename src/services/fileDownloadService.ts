@@ -15,7 +15,7 @@ const downloadFile = (url: string, ndx: number) => {
       });
     });
   } catch (e) {
-    console.error("oops");
+    console.error("error encountered downloading file", e);
   }
 };
 
