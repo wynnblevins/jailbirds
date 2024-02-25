@@ -1,1 +1,0 @@
-web: ./bin/www node out/app.js

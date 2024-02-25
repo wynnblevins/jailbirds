@@ -1,3 +1,5 @@
+import { Jailbird } from "../app";
+
 const cheerio = require("cheerio");
 const axios = require("axios");
 
@@ -35,7 +37,7 @@ const getInmateIDFromProfilePage = (profile) => {
 
 export const buildJailbirds = async () => {
   try {
-    const jailbirds = [];
+    const jailbirds: Jailbird[] = [];
     const response = await axios.get(inmatesPageURL);
     const inmateListPage = await cheerio.load(response.data);
 

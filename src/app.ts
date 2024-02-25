@@ -5,7 +5,8 @@ const {
   findAllJailbirds,
   createJailbird,
 } = require("./services/jailbirdService");
-const { buildJailbirds } = require("./services/scraperService");
+const { buildJailbirds: buildRichmondJailbirds } = require("./services/richmondScraperService");
+const { buildJailbirds: buildHenricoJailbirds } = require("./services/henricoScraperService");
 const { postToInsta } = require('./services/instagramPostService');
 
 require("dotenv").config();
@@ -22,23 +23,26 @@ const mongoURL = `mongodb+srv://${process.env.MONGO_USERNAME}:${process.env.MONG
 mongoose.connect(mongoURL);
 
 const run = async () => {
-  console.log("scraping jailbird web page...");
-  const pageJailbirds = await buildJailbirds();
+  console.log("scraping Henrico jailbird web page...");
+  const henricoPageJailbirds = await buildHenricoJailbirds();
+  
+  console.log("scraping Richmond jailbird web page...");
+  const richmondPageJailbirds = await buildRichmondJailbirds();
 
   console.log("fetching jailbirds from database...");
   const dbJailbirds = await findAllJailbirds();
 
-  console.log(dbJailbirds);
-
-  console.log("checking for new jailbirds...");
-  const newJailbirds = pageJailbirds?.filter(
+  const allPageJailbirds = henricoPageJailbirds.concat(richmondPageJailbirds)
+  
+  // console.log("checking for new jailbirds...");
+  const newJailbirds = allPageJailbirds?.filter(
     ({ inmateID: pageID }) =>
       !dbJailbirds?.some(({ inmateID: dbID }) => {
         return dbID === pageID;
       })
   );
 
-  console.log(`New Jailbirds: ${JSON.stringify(newJailbirds)}`);
+  console.log(`New jailbirds detected: ${JSON.stringify(newJailbirds)}`);
  
   const jailbirdsToPost = [];
 
@@ -60,23 +64,32 @@ const run = async () => {
     jailbirdsToPost.push(jailbird)
   });
 
+  // generate a random number for the time to pause
+  const randomInterval = randomIntFromInterval(480000, 960000);
+
   await new Promise(async (resolve) => { 
-    // pausing to try and fool instagram
-    setTimeout(resolve, 15000);
+    // pausing to try and fool instagram API
+    setTimeout(resolve, randomInterval);
   });
 
+  console.log(JSON.stringify(jailbirdsToPost));
   await postToInsta(jailbirdsToPost); 
 };
 
+function randomIntFromInterval(min, max) { // min and max included 
+  return Math.floor(Math.random() * (max - min + 1) + min)
+}
+
 // Schedule tasks to be run on the server.
-cron.schedule('0 16 * * *', async () => {
+//cron.schedule('0 18 * * *', async () => {
   console.log('Running webscraper.')
   run().then(() => {
     console.log('Jailbirds have been updated.');
+    process.exit();
   }).catch((err) => {
     console.error('Encountered error while updating jailbirds. Halting script execution.', err);
     process.exit();
   })
-});
+//});
 
 export { Jailbird };
