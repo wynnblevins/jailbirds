@@ -3,7 +3,13 @@ import { Jailbird } from "../app";
 const cheerio = require("cheerio");
 const axios = require("axios");
 
-const inmatesPageURL = "https://webapp01.richmondnc.com/dcn/inmates";
+const inmatesPageURL: string = "https://webapp01.richmondnc.com/dcn/inmates";
+
+const getJailbirdAge = (listPage, inmateElement) => {
+  const children = listPage(inmateElement).find('.dx-ar')
+  const data = children[0].children[0].children[0].data;
+  return +data;
+}
 
 const getNameFromProfilePage = (profile) => {
   const name = profile("#HeaderText");
@@ -42,6 +48,8 @@ export const buildJailbirds = async () => {
     const inmateListPage = await cheerio.load(response.data);
 
     const inmateProfileURLs = [];
+    const inmateAges = [];
+
     inmateListPage(".dxgvDataRow_MaterialCompact").each(
       (ndx: number, inmateElement) => {
         const inmateProfileURL = getInmateProfileURL(
@@ -49,6 +57,10 @@ export const buildJailbirds = async () => {
           inmateElement
         );
 
+        const result = getJailbirdAge(inmateListPage, inmateElement);
+      
+        // keeping these arrays parallel 
+        inmateAges.push(result)
         inmateProfileURLs.push(inmateProfileURL);
       }
     );
@@ -70,11 +82,13 @@ export const buildJailbirds = async () => {
       const inmateID = getInmateIDFromProfilePage(profile);
 
       // build the inmate object
-      const inmateObj = {
+      const inmateObj: Jailbird = {
         inmateID,
         name,
         charges: groomedCharges,
         picture: profilePic,
+        facility: 'RICHMOND CITY JAIL',
+        age: inmateAges[i],
       };
 
       jailbirds.push(inmateObj);

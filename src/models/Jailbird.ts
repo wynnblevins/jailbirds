@@ -6,6 +6,8 @@ const jailbirdSchema = new mongoose.Schema(
     name: String,
     charges: String,
     picture: String,
+    facility: String,
+    age: Number,
   },
   { typeKey: "$type" }
 );

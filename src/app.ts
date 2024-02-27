@@ -8,14 +8,17 @@ const {
 const { buildJailbirds: buildRichmondJailbirds } = require("./services/richmondScraperService");
 const { buildJailbirds: buildHenricoJailbirds } = require("./services/henricoScraperService");
 const { postToInsta } = require('./services/instagramPostService');
+const { shuffle } = require('./services/shuffleService');
 
 require("dotenv").config();
 
 interface Jailbird {
-  inmateID: String,
-  name: String,
-  charges: String,
-  picture: String
+  inmateID: string,
+  name: string,
+  charges: string,
+  picture: string,
+  facility: string,
+  age: number
 }
 
 const mongoURL = `mongodb+srv://${process.env.MONGO_USERNAME}:${process.env.MONGO_PASSWORD}@cluster0.boa43ki.mongodb.net/${process.env.DATABASE_NAME}?retryWrites=true&w=majority`;
@@ -23,18 +26,23 @@ const mongoURL = `mongodb+srv://${process.env.MONGO_USERNAME}:${process.env.MONG
 mongoose.connect(mongoURL);
 
 const run = async () => {
-  console.log("scraping Henrico jailbird web page...");
+  const jailbirdsToPost: Jailbird[] = [];
+  
+  // scrape both the Henrico and Richmond mugshot web pages
+  console.log("Scraping Henrico jailbird web page...");
   const henricoPageJailbirds = await buildHenricoJailbirds();
   
-  console.log("scraping Richmond jailbird web page...");
+  console.log("Scraping Richmond jailbird web page...");
   const richmondPageJailbirds = await buildRichmondJailbirds();
+  
+  // consolidate the two page jailbirds lists into a single list of jailbirds
+  const allPageJailbirds = henricoPageJailbirds.concat(richmondPageJailbirds)
 
-  console.log("fetching jailbirds from database...");
+  console.log("Fetching jailbirds from database...");
   const dbJailbirds = await findAllJailbirds();
 
-  const allPageJailbirds = henricoPageJailbirds.concat(richmondPageJailbirds)
-  
-  // console.log("checking for new jailbirds...");
+  // ask the database if there are any new jailbirds
+  console.log("Checking for new jailbirds...");
   const newJailbirds = allPageJailbirds?.filter(
     ({ inmateID: pageID }) =>
       !dbJailbirds?.some(({ inmateID: dbID }) => {
@@ -42,54 +50,48 @@ const run = async () => {
       })
   );
 
-  console.log(`New jailbirds detected: ${JSON.stringify(newJailbirds)}`);
- 
-  const jailbirdsToPost = [];
+  if (newJailbirds) {
+    // if it turns out that we have new jailbirds, create a db record of the newbies
+    console.log(`Posting ${newJailbirds.length} jailbirds to instagram`);    
 
-  newJailbirds?.forEach(async (newJailbird: Jailbird, ndx: number) => {
-    createJailbird(
-      newJailbird.inmateID,
-      newJailbird.name,
-      newJailbird.charges,
-      newJailbird.picture
-    );
+    // randomize the order of the jailbirds
+    const shuffledJailbirds = shuffle(newJailbirds);
 
-    const jailbird: Jailbird = {
-      inmateID: newJailbird.inmateID,
-      name: newJailbird.name,
-      charges: newJailbird.charges,
-      picture: newJailbird.picture
-    };
-
-    jailbirdsToPost.push(jailbird)
-  });
-
-  // generate a random number for the time to pause
-  const randomInterval = randomIntFromInterval(480000, 960000);
-
-  await new Promise(async (resolve) => { 
-    // pausing to try and fool instagram API
-    setTimeout(resolve, randomInterval);
-  });
-
-  console.log(JSON.stringify(jailbirdsToPost));
-  await postToInsta(jailbirdsToPost); 
+    shuffledJailbirds?.forEach(async (newJailbird: Jailbird, ndx: number) => {
+      try {
+        await createJailbird(
+          newJailbird.inmateID,
+          newJailbird.name,
+          newJailbird.charges,
+          newJailbird.picture,
+          newJailbird.facility
+        );
+        
+        const jailbird: Jailbird = {
+          inmateID: newJailbird.inmateID,
+          name: newJailbird.name,
+          charges: newJailbird.charges,
+          picture: newJailbird.picture,
+          facility: newJailbird.facility,
+          age: newJailbird.age
+        };
+    
+        jailbirdsToPost.push(jailbird)
+      } catch (e: any) {
+        console.error("Error encountered while creating jailbird.", e);
+      }
+    });
+    
+    return await postToInsta(jailbirdsToPost);
+  }
 };
 
-function randomIntFromInterval(min, max) { // min and max included 
-  return Math.floor(Math.random() * (max - min + 1) + min)
-}
-
-// Schedule tasks to be run on the server.
-//cron.schedule('0 18 * * *', async () => {
-  console.log('Running webscraper.')
-  run().then(() => {
-    console.log('Jailbirds have been updated.');
-    process.exit();
-  }).catch((err) => {
-    console.error('Encountered error while updating jailbirds. Halting script execution.', err);
-    process.exit();
-  })
-//});
+run().then(() => {
+  console.log('Program complete, stopping execution.');
+}).catch((e) => {
+  console.log(`Program encountered error: ${e}`)
+}).finally(() => {
+  process.exit();
+});
 
 export { Jailbird };

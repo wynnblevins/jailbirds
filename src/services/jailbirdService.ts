@@ -12,13 +12,15 @@ const createJailbird = async (
   inmateID: string,
   name: string,
   charges: string,
-  picture: string
+  picture: string,
+  facility: string,
 ) => {
   const jailbird = new Jailbird({
     inmateID: inmateID,
     name: name,
     charges: charges,
     picture: picture,
+    facility: facility
   });
   return await jailbird.save();
 };
