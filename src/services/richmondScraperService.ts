@@ -89,6 +89,7 @@ export const buildJailbirds = async () => {
         picture: profilePic,
         facility: 'RICHMOND CITY JAIL',
         age: inmateAges[i],
+        timestamp: new Date().toISOString()
       };
 
       jailbirds.push(inmateObj);

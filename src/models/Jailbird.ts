@@ -8,6 +8,8 @@ const jailbirdSchema = new mongoose.Schema(
     picture: String,
     facility: String,
     age: Number,
+    tags: String,
+    timestamp: String,
   },
   { typeKey: "$type" }
 );

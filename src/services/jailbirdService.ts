@@ -20,7 +20,8 @@ const createJailbird = async (
     name: name,
     charges: charges,
     picture: picture,
-    facility: facility
+    facility: facility,
+    timestamp: new Date().toISOString(),
   });
   return await jailbird.save();
 };

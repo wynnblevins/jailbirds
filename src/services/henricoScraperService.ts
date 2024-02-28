@@ -87,7 +87,8 @@ export const buildJailbirds = async () => {
       name: jailbirdSpans[i],
       picture: jailbirdPics[j],
       facility: 'HENRICO COUNTY REGIONAL JAIL',
-      age: jailbirdSpans[i + 1]
+      age: jailbirdSpans[i + 1],
+      timestamp: new Date().toISOString()
     };
 
     jailbirds.push(jailbird);

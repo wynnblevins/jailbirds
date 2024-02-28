@@ -18,7 +18,8 @@ interface Jailbird {
   charges: string,
   picture: string,
   facility: string,
-  age: number
+  age: number,
+  timestamp: string
 }
 
 const mongoURL = `mongodb+srv://${process.env.MONGO_USERNAME}:${process.env.MONGO_PASSWORD}@cluster0.boa43ki.mongodb.net/${process.env.DATABASE_NAME}?retryWrites=true&w=majority`;
@@ -64,7 +65,8 @@ const run = async () => {
           newJailbird.name,
           newJailbird.charges,
           newJailbird.picture,
-          newJailbird.facility
+          newJailbird.facility,
+          new Date().toISOString(),
         );
         
         const jailbird: Jailbird = {
@@ -73,7 +75,8 @@ const run = async () => {
           charges: newJailbird.charges,
           picture: newJailbird.picture,
           facility: newJailbird.facility,
-          age: newJailbird.age
+          age: newJailbird.age,
+          timestamp: new Date().toISOString()
         };
     
         jailbirdsToPost.push(jailbird)
