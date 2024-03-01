@@ -26,9 +26,7 @@ const mongoURL = `mongodb+srv://${process.env.MONGO_USERNAME}:${process.env.MONG
 
 mongoose.connect(mongoURL);
 
-const run = async () => {
-  const jailbirdsToPost: Jailbird[] = [];
-  
+const scrapeWebpages = async (): Promise<Jailbird[]> => {
   // scrape both the Henrico and Richmond mugshot web pages
   console.log("Scraping Henrico jailbird web page...");
   const henricoPageJailbirds = await buildHenricoJailbirds();
@@ -37,14 +35,22 @@ const run = async () => {
   const richmondPageJailbirds = await buildRichmondJailbirds();
   
   // consolidate the two page jailbirds lists into a single list of jailbirds
-  const allPageJailbirds = henricoPageJailbirds.concat(richmondPageJailbirds)
+  return henricoPageJailbirds.concat(richmondPageJailbirds)
+};
 
+const run = async () => {
+  const jailbirdsToPost: Jailbird[] = [];
+  
+  // get the current state of the jailbird webpages
+  const webpageJailbirds = await scrapeWebpages();
+
+  // get the current state of the jailbirds database
   console.log("Fetching jailbirds from database...");
   const dbJailbirds = await findAllJailbirds();
 
   // ask the database if there are any new jailbirds
   console.log("Checking for new jailbirds...");
-  const newJailbirds = allPageJailbirds?.filter(
+  const newJailbirds = webpageJailbirds?.filter(
     ({ inmateID: pageID }) =>
       !dbJailbirds?.some(({ inmateID: dbID }) => {
         return dbID === pageID;
