@@ -1,3 +1,5 @@
+import { Jailbird as IJailbird } from "../app";
+
 const Jailbird = require("../models/Jailbird");
 
 const findAllJailbirds = async () => {
@@ -6,6 +8,10 @@ const findAllJailbirds = async () => {
 
 const findJailbirdById = async (id: string) => {
   return await Jailbird.find({ _id: id });
+};
+
+const createMultipleJailbirds = async (jailbirds: IJailbird) => {
+  return await Jailbird.insertMany(jailbirds)
 };
 
 const createJailbird = async (
@@ -36,7 +42,9 @@ const updateJailbird = async (id: string, update: object) => {
 
 module.exports = {
   findAllJailbirds,
+  findJailbirdById,
   createJailbird,
+  createMultipleJailbirds,
   deleteJailbird,
   updateJailbird,
 };
