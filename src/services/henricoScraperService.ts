@@ -51,7 +51,7 @@ const mergeJailbirdsIntoUnique = (nonUniqueJailbirds: Jailbird[]): Jailbird[] =>
   return uniqueJailbirds;
 }
 
-export const buildJailbirds = async () => {
+export const buildJailbirds = async (): Promise<Jailbird[]> => {
   let jailbirds: Jailbird[] = [];
 
   const browser = await puppeteer.launch({ headless: true });

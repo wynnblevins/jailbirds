@@ -41,7 +41,7 @@ const getInmateIDFromProfilePage = (profile) => {
   return ids.split("&")[0];
 };
 
-export const buildJailbirds = async () => {
+export const buildJailbirds = async (): Promise<Jailbird[]> => {
   try {
     const jailbirds: Jailbird[] = [];
     const response = await axios.get(inmatesPageURL);
