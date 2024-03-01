@@ -89,7 +89,8 @@ export const buildJailbirds = async (): Promise<Jailbird[]> => {
         picture: profilePic,
         facility: 'RICHMOND CITY JAIL',
         age: inmateAges[i],
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        isPosted: false,
       };
 
       jailbirds.push(inmateObj);

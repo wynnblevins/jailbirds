@@ -28,6 +28,7 @@ const createJailbird = async (
     picture: picture,
     facility: facility,
     timestamp: new Date().toISOString(),
+    isPosted: false
   });
   return await jailbird.save();
 };

@@ -10,6 +10,7 @@ const jailbirdSchema = new mongoose.Schema(
     age: Number,
     tags: String,
     timestamp: String,
+    isPosted: Boolean,
   },
   { typeKey: "$type" }
 );
