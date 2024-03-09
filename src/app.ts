@@ -4,15 +4,18 @@ const cron = require('node-cron');
 const {
   findAllJailbirds,
   createJailbird,
+  deleteOldJailbirds
 } = require("./services/jailbirdService");
 const { buildJailbirds: buildRichmondJailbirds } = require("./services/richmondScraperService");
 const { buildJailbirds: buildHenricoJailbirds } = require("./services/henricoScraperService");
 const { postToInsta } = require('./services/instagramPostService');
 const { shuffle } = require('./services/shuffleService');
+import { Types } from 'mongoose';
 
 require("dotenv").config();
 
 interface Jailbird {
+  _id?: Types.ObjectId,
   inmateID: string,
   name: string,
   charges: string,
@@ -20,7 +23,8 @@ interface Jailbird {
   facility: string,
   age: number,
   timestamp: string,
-  isPosted: boolean
+  isPosted: boolean,
+  hashtags: string[]
 }
 
 const mongoURL = `mongodb+srv://${process.env.MONGO_USERNAME}:${process.env.MONGO_PASSWORD}@cluster0.boa43ki.mongodb.net/${process.env.DATABASE_NAME}?retryWrites=true&w=majority`;
@@ -39,15 +43,23 @@ const scrapeWebpages = async (): Promise<Jailbird[]> => {
   return henricoPageJailbirds.concat(richmondPageJailbirds)
 };
 
+const pruneDB = async () => {
+  // delete jailbirds older than 30 days
+  var d = new Date();
+  d.setDate(d.getDate() - 30);
+  console.log(d.toString());
+  await deleteOldJailbirds(d);
+};
+
 const run = async () => {
-  const jailbirdsToPost: Jailbird[] = [];
-  
-  // get the current state of the jailbird webpages
-  const webpageJailbirds = await scrapeWebpages();
+  pruneDB();
 
   // get the current state of the jailbirds database
   console.log("Fetching jailbirds from database...");
   const dbJailbirds = await findAllJailbirds();
+
+  // get the current state of the jailbird webpages
+  const webpageJailbirds = await scrapeWebpages();
 
   // ask the database if there are any new jailbirds
   console.log("Checking for new jailbirds...");
@@ -58,10 +70,7 @@ const run = async () => {
       })
   );
 
-  if (newJailbirds) {
-    // if it turns out that we have new jailbirds, create a db record of the newbies
-    console.log(`Posting ${newJailbirds.length} jailbirds to instagram`);    
-
+  if (newJailbirds) {    
     // randomize the order of the jailbirds
     const shuffledJailbirds = shuffle(newJailbirds);
 
@@ -74,26 +83,15 @@ const run = async () => {
           newJailbird.picture,
           newJailbird.facility,
           new Date().toISOString(),
+          newJailbird.hashtags,
+          newJailbird.age
         );
-        
-        const jailbird: Jailbird = {
-          inmateID: newJailbird.inmateID,
-          name: newJailbird.name,
-          charges: newJailbird.charges,
-          picture: newJailbird.picture,
-          facility: newJailbird.facility,
-          age: newJailbird.age,
-          timestamp: new Date().toISOString(),
-          isPosted: false
-        };
-    
-        jailbirdsToPost.push(jailbird)
       } catch (e: any) {
         console.error("Error encountered while creating jailbird.", e);
       }
     });
     
-    return await postToInsta(jailbirdsToPost);
+    return await postToInsta();
   }
 };
 

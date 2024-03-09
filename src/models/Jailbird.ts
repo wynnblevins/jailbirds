@@ -11,6 +11,7 @@ const jailbirdSchema = new mongoose.Schema(
     tags: String,
     timestamp: String,
     isPosted: Boolean,
+    hashtags: [String]
   },
   { typeKey: "$type" }
 );

@@ -1,6 +1,6 @@
 import { Jailbird } from "../app";
 
-function shuffle(array) {
+function shuffle(array: Jailbird[]) {
   var currentIndex = array.length, temporaryValue, randomIndex;
   
   // While there remain elements to shuffle...

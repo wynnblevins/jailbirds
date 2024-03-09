@@ -91,6 +91,16 @@ export const buildJailbirds = async (): Promise<Jailbird[]> => {
         age: inmateAges[i],
         timestamp: new Date().toISOString(),
         isPosted: false,
+        hashtags: [
+          '#richmondcityjail',
+          '#richmondjail', 
+          '#jailbirds',
+          '#lockedup', 
+          '#jail', 
+          '#rva', 
+          '#richmondva', 
+          '#richmond'
+        ]
       };
 
       jailbirds.push(inmateObj);

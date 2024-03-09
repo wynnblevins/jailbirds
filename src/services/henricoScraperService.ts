@@ -90,6 +90,16 @@ export const buildJailbirds = async (): Promise<Jailbird[]> => {
       age: jailbirdSpans[i + 1],
       timestamp: new Date().toISOString(),
       isPosted: false,
+      hashtags: [
+        '#henrico',
+        '#henricocounty',
+        '#jail',
+        '#jailbirds',
+        '#lockedup',
+        '#henricojail',
+        '#henricojailwest',
+        '#henricojaileast'
+      ]
     };
 
     jailbirds.push(jailbird);

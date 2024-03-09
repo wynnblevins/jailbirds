@@ -10,6 +10,10 @@ const findJailbirdById = async (id: string) => {
   return await Jailbird.find({ _id: id });
 };
 
+const findUnpostedJailbirds = async () => {
+  return await Jailbird.find({ isPosted: false });
+}
+
 const createMultipleJailbirds = async (jailbirds: IJailbird) => {
   return await Jailbird.insertMany(jailbirds)
 };
@@ -20,6 +24,9 @@ const createJailbird = async (
   charges: string,
   picture: string,
   facility: string,
+  timestamp: string,
+  hashtags: string[],
+  age: string
 ) => {
   const jailbird = new Jailbird({
     inmateID: inmateID,
@@ -27,10 +34,16 @@ const createJailbird = async (
     charges: charges,
     picture: picture,
     facility: facility,
-    timestamp: new Date().toISOString(),
-    isPosted: false
+    timestamp: timestamp,
+    isPosted: false,
+    hashtags: hashtags,
+    age: age
   });
   return await jailbird.save();
+};
+
+const deleteOldJailbirds = async (cutoffDate: Date) => {
+  return await Jailbird.deleteMany({ timestamp: { $lte: cutoffDate } })
 };
 
 const deleteJailbird = async (id: string) => {
@@ -44,8 +57,10 @@ const updateJailbird = async (id: string, update: object) => {
 module.exports = {
   findAllJailbirds,
   findJailbirdById,
+  findUnpostedJailbirds,
   createJailbird,
   createMultipleJailbirds,
   deleteJailbird,
+  deleteOldJailbirds,
   updateJailbird,
 };
