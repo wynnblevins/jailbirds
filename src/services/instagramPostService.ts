@@ -17,20 +17,18 @@ const performPost = async (ig, imageBuffer, jailbird: Jailbird) => {
       caption: `\n\n${jailbird.name}, ${jailbird.age}: \n\n${jailbird.facility} \n\n${jailbird.charges} \n\n${jailbird.hashtags.join(', ')}`
     });
 
-    await updateJailbird(jailbird._id, { isPosted: true });
+    return await updateJailbird(jailbird.inmateID, { isPosted: true });
   } catch (e: any) {
     console.error(`Encountered error ${e} while posting to instagram.`)
   }
 };
 
-const postToInsta = async () => {
-  const jailbirds = await findUnpostedJailbirds();
-
-  // only post 15 jailbirds at one time
-  const BATCH_SIZE = 15;
+const postToInsta = async (jailbirds: Jailbird[]) => {
+  // only post 10 jailbirds at one time
+  const BATCH_SIZE = 10;
   const jailbirdsToPost = jailbirds.slice(0, BATCH_SIZE);
 
-  return new Promise<void>(async (done) => {
+  return new Promise<void>(async (finishPosting) => {
     const ig = new IgApiClient();
     ig.state.generateDevice(process.env.IG_USERNAME);
     await ig.account.login(process.env.IG_USERNAME, process.env.IG_PASSWORD);
@@ -41,14 +39,15 @@ const postToInsta = async () => {
         encoding: null, 
       });
     
-      const randomWaitTime = randomIntFromInterval(300000, 500000);
+      const randomWaitTime = randomIntFromInterval(300000, 480000);
       await new Promise<void>(done => setTimeout(() => {
-        performPost(ig, imageBuffer, jailbirdsToPost[i]);
-        done();
+        performPost(ig, imageBuffer, jailbirdsToPost[i]).then(() => {
+          done();
+        });
       }, randomWaitTime));        
     }
 
-    done();
+    finishPosting();
   });
 }
 

@@ -10,6 +10,10 @@ const findJailbirdById = async (id: string) => {
   return await Jailbird.find({ _id: id });
 };
 
+const findJailbirdByInmateId = async (inmateID: string) => {
+  return await Jailbird.find({ inmateID: inmateID });
+}
+
 const findUnpostedJailbirds = async () => {
   return await Jailbird.find({ isPosted: false });
 }
@@ -50,11 +54,12 @@ const deleteJailbird = async (id: string) => {
   return await Jailbird.deleteOne({ _id: id });
 };
 
-const updateJailbird = async (id: string, update: object) => {
-  return await Jailbird.findOneAndUpdate({ _id: id }, update);
+const updateJailbird = async (inmateID: string, update: object) => {
+  return await Jailbird.findOneAndUpdate({ inmateID: inmateID }, update);
 };
 
 module.exports = {
+  findJailbirdByInmateId,
   findAllJailbirds,
   findJailbirdById,
   findUnpostedJailbirds,

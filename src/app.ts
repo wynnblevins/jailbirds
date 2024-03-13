@@ -1,10 +1,10 @@
 require("dotenv").config();
 const mongoose = require("mongoose");
-const cron = require('node-cron');
 const {
-  findAllJailbirds,
   createJailbird,
-  deleteOldJailbirds
+  deleteOldJailbirds,
+  findUnpostedJailbirds,
+  findJailbirdByInmateId
 } = require("./services/jailbirdService");
 const { buildJailbirds: buildRichmondJailbirds } = require("./services/richmondScraperService");
 const { buildJailbirds: buildHenricoJailbirds } = require("./services/henricoScraperService");
@@ -51,47 +51,77 @@ const pruneDB = async () => {
   await deleteOldJailbirds(d);
 };
 
+/**
+ * filters the jailbirds that are are posted to instagram
+ * 
+ * @param pageJailbirds jailbirds that exist on the jail webpage
+ * @returns a list of unposted jailbirds from the jail webpages
+ */
+const getJailbirdsToPost = (pageJailbirds: Jailbird[], 
+  dbJailbirds: Jailbird[]): Jailbird[] => {
+  
+  if (!dbJailbirds.length) {
+    return pageJailbirds;
+  }
+
+  let unpostedJailbirds = pageJailbirds.filter(e => {
+    return dbJailbirds.some(item => item.inmateID === e.inmateID);
+  });
+  
+  return unpostedJailbirds
+};
+
 const run = async () => {
-  pruneDB();
+  // TODO: delete any jailbirds older than 30 days
+  // pruneDB();
 
-  // get the current state of the jailbirds database
+  // get the current unposted jailbirds from the database
   console.log("Fetching jailbirds from database...");
-  const dbJailbirds = await findAllJailbirds();
+  const dbJailbirds = await findUnpostedJailbirds();
 
-  // get the current state of the jailbird webpages
-  const webpageJailbirds = await scrapeWebpages();
-
-  // ask the database if there are any new jailbirds
-  console.log("Checking for new jailbirds...");
-  const newJailbirds = webpageJailbirds?.filter(
-    ({ inmateID: pageID }) =>
-      !dbJailbirds?.some(({ inmateID: dbID }) => {
-        return dbID === pageID;
-      })
+  // get the current unposted jailbirds from the webpages
+  const allWebpageJailbirds = await scrapeWebpages();
+  
+  const newJailbirds = getJailbirdsToPost(
+    allWebpageJailbirds, 
+    dbJailbirds
   );
 
-  if (newJailbirds) {    
+  if (newJailbirds) {  
+    console.log(`${newJailbirds.length} unposted jailbirds detected...`)
+    
     // randomize the order of the jailbirds
     const shuffledJailbirds = shuffle(newJailbirds);
 
-    shuffledJailbirds?.forEach(async (newJailbird: Jailbird, ndx: number) => {
+    
+
+    // save any new jailbirds to the database
+    shuffledJailbirds?.forEach(async (jailbird: Jailbird) => {
+      
+      const dbJailbird = await findJailbirdByInmateId(jailbird.inmateID);
+      
       try {
-        await createJailbird(
-          newJailbird.inmateID,
-          newJailbird.name,
-          newJailbird.charges,
-          newJailbird.picture,
-          newJailbird.facility,
-          new Date().toISOString(),
-          newJailbird.hashtags,
-          newJailbird.age
-        );
+        // if the jailbird hasn't been saved to the DB
+        if (!dbJailbird) { 
+          console.log(`Saving ${jailbird.name} to the database`)
+
+          await createJailbird(
+            jailbird.inmateID,
+            jailbird.name,
+            jailbird.charges,
+            jailbird.picture,
+            jailbird.facility,
+            new Date().toISOString(),
+            jailbird.hashtags,
+            jailbird.age
+          );
+        }
       } catch (e: any) {
         console.error("Error encountered while creating jailbird.", e);
       }
     });
-    
-    return await postToInsta();
+
+    return await postToInsta(shuffledJailbirds);
   }
 };
 

@@ -66,7 +66,8 @@ export const buildJailbirds = async (): Promise<Jailbird[]> => {
 
   await page.waitForSelector('div.modalBody', {hidden: true});
 
-  const rowsSelect = await page.$("select[name='ctl00_SearchContent_gvData_length']");
+  const rowsSelect = await page.waitForSelector("select[name='ctl00_SearchContent_gvData_length']");
+  // const rowsSelect = await page.$("select[name='ctl00_SearchContent_gvData_length']");
   await rowsSelect.select("100");
 
   // Get all p elements using page.$$
