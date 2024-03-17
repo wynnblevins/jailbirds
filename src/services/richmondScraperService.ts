@@ -37,8 +37,8 @@ const getProfilePicFromProfilePage = (profile) => {
 
 const getInmateIDFromProfilePage = (profile) => {
   const mugshotImg = profile("#mugShotImg");
-  const ids = mugshotImg[0].attribs.src.split("id=")[1];
-  return ids.split("&")[0];
+  const ids = mugshotImg[0].attribs.src?.split("id=")[1];
+  return ids?.split("&")[0];
 };
 
 export const buildJailbirds = async (): Promise<Jailbird[]> => {

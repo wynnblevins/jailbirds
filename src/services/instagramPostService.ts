@@ -4,8 +4,8 @@ const { IgApiClient } = require('instagram-private-api');
 const { get } = require('request-promise');
 const { updateJailbird, findUnpostedJailbirds } = require('./jailbirdService');
 
-function randomIntFromInterval(min, max) { // min and max included 
-  return Math.floor(Math.random() * (max - min + 1) + min)
+const randomIntFromInterval = (min: number, max: number) => {  
+  return Math.floor(Math.random() * (max - min + 1) + min);
 }
 
 const performPost = async (ig, imageBuffer, jailbird: Jailbird) => {
@@ -23,10 +23,12 @@ const performPost = async (ig, imageBuffer, jailbird: Jailbird) => {
   }
 };
 
-const postToInsta = async (jailbirds: Jailbird[]) => {
+const postToInsta = async () => {
   // only post 10 jailbirds at one time
   const BATCH_SIZE = 10;
-  const jailbirdsToPost = jailbirds.slice(0, BATCH_SIZE);
+  
+  const unpostedJailbirds: Jailbird[] = await findUnpostedJailbirds();
+  const jailbirdsToPost = unpostedJailbirds.slice(0, BATCH_SIZE)
 
   return new Promise<void>(async (finishPosting) => {
     const ig = new IgApiClient();
@@ -39,7 +41,8 @@ const postToInsta = async (jailbirds: Jailbird[]) => {
         encoding: null, 
       });
     
-      const randomWaitTime = randomIntFromInterval(300000, 480000);
+      // wait 5 to 10 minutes between posts
+      const randomWaitTime = randomIntFromInterval(300000, 600000);
       await new Promise<void>(done => setTimeout(() => {
         performPost(ig, imageBuffer, jailbirdsToPost[i]).then(() => {
           done();

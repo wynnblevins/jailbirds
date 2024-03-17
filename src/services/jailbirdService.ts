@@ -14,7 +14,7 @@ const findJailbirdByInmateId = async (inmateID: string) => {
   return await Jailbird.find({ inmateID: inmateID });
 }
 
-const findUnpostedJailbirds = async () => {
+const findUnpostedJailbirds = async (): Promise<IJailbird[]> => {
   return await Jailbird.find({ isPosted: false });
 }
 
@@ -47,7 +47,7 @@ const createJailbird = async (
 };
 
 const deleteOldJailbirds = async (cutoffDate: Date) => {
-  return await Jailbird.deleteMany({ timestamp: { $lte: cutoffDate } })
+  return await Jailbird.deleteMany({ timestamp: { $gte: cutoffDate } })
 };
 
 const deleteJailbird = async (id: string) => {
@@ -58,7 +58,7 @@ const updateJailbird = async (inmateID: string, update: object) => {
   return await Jailbird.findOneAndUpdate({ inmateID: inmateID }, update);
 };
 
-module.exports = {
+export = {
   findJailbirdByInmateId,
   findAllJailbirds,
   findJailbirdById,
