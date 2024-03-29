@@ -27,6 +27,8 @@ const postToInsta = async () => {
   // only post 10 jailbirds at one time
   const BATCH_SIZE = 10;
   
+  console.log('Beginning to post jailbirds to instagram.')
+
   const unpostedJailbirds: Jailbird[] = await findUnpostedJailbirds();
   const jailbirdsToPost = unpostedJailbirds.slice(0, BATCH_SIZE)
 
@@ -41,8 +43,8 @@ const postToInsta = async () => {
         encoding: null, 
       });
     
-      // wait 5 to 10 minutes between posts
-      const randomWaitTime = randomIntFromInterval(300000, 600000);
+      // wait 10 to 20 minutes between posts
+      const randomWaitTime = randomIntFromInterval(600000, 1200000);
       await new Promise<void>(done => setTimeout(() => {
         performPost(ig, imageBuffer, jailbirdsToPost[i]).then(() => {
           done();

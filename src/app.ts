@@ -8,7 +8,8 @@ const {
 const { buildJailbirds: buildHenricoJailbirds } = require("./services/henricoScraperService");
 const { postToInsta } = require('./services/instagramPostService');
 const { filterSavedJailbirds } = require('./services/jailbirdFilterService');
-const _ = require("lodash")
+const _ = require("lodash");
+const cron = require('node-cron');
 
 import { Types } from 'mongoose';
 
@@ -75,12 +76,12 @@ const run = async () => {
   return await postToInsta();
 };
 
-run().then(() => {
-  console.log('Program complete, stopping execution.');
-}).catch((e) => {
-  console.log(`Program encountered error: ${e}`)
-}).finally(() => {
-  process.exit();
+cron.schedule('0 17 * * *', () => {
+  run().then(() => {
+    console.log('Program complete, stopping execution.');
+  }).catch((e) => {
+    console.log(`Program encountered error: ${e}`)
+  });
 });
 
 export { Jailbird };
