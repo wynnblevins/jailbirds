@@ -111,14 +111,10 @@ export const buildJailbirds = async (): Promise<Jailbird[]> => {
       timestamp: new Date().toISOString(),
       isPosted: false,
       hashtags: [
-        '#henrico',
-        '#henricocounty',
         '#jail',
         '#jailbirds',
-        '#lockedup',
         '#henricojail',
-        '#henricojailwest',
-        '#henricojaileast'
+        '#rva'
       ]
     };
 
