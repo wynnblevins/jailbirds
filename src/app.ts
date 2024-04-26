@@ -76,7 +76,7 @@ const run = async () => {
   return await postToInsta();
 };
 
-cron.schedule('0 18 * * *', () => {
+cron.schedule('0 19 * * *', () => {
   run().then(() => {
     console.log('Program complete, stopping execution.');
   }).catch((e) => {
