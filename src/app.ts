@@ -6,6 +6,7 @@ const {
   findAllJailbirds,
 } = require("./services/jailbirdService");
 const { buildJailbirds: buildHenricoJailbirds } = require("./services/henricoScraperService");
+const { buildJailbirds: buildRichmondJailbirds } = require("./services/richmondScraperService");
 const { postToInsta } = require('./services/instagramPostService');
 const { filterSavedJailbirds } = require('./services/jailbirdFilterService');
 const _ = require("lodash");
@@ -28,14 +29,19 @@ interface Jailbird {
   hashtags: string[]
 }
 
-const mongoURL = `mongodb+srv://${process.env.MONGO_USERNAME}:${process.env.MONGO_PASSWORD}@cluster0.boa43ki.mongodb.net/${process.env.DATABASE_NAME}?retryWrites=true&w=majority`;
+const mongoURL = `mongodb+srv://${process.env.MONGO_USERNAME}:${process.env.MONGO_PASSWORD}@${process.env.DATABASE_CLUSTER_URL}/${process.env.DATABASE_NAME}?retryWrites=true&w=majority`;
 
 mongoose.connect(mongoURL);
 
 const scrapeWebpages = async (): Promise<Jailbird[]> => {
   // scrape the Henrico mugshot web
-  console.log("Scraping Henrico jailbird web page...");
-  return await buildHenricoJailbirds();
+  // console.log("Scraping Henrico jailbird web page...");
+  // const henricoJailbirds = await buildHenricoJailbirds();
+
+  console.log("Scraping Richmond jailbird web page...");
+  const richmondJailbirds = await buildRichmondJailbirds();
+
+  return richmondJailbirds;
 };
 
 const pruneDB = async () => {
@@ -76,12 +82,18 @@ const run = async () => {
   return await postToInsta();
 };
 
-cron.schedule('0 18 * * *', () => {
+run().then(() => {
+  console.log('Program complete, stopping execution.');
+}).catch((e) => {
+  console.log(`Program encountered error: ${e}`)
+});
+
+/**cron.schedule('0 18 * * *', () => {
   run().then(() => {
     console.log('Program complete, stopping execution.');
   }).catch((e) => {
     console.log(`Program encountered error: ${e}`)
   });
-});
+});**/
 
 export { Jailbird };

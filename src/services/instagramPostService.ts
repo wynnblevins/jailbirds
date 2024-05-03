@@ -24,8 +24,9 @@ const performPost = async (ig, imageBuffer, jailbird: Jailbird) => {
 };
 
 const postToInsta = async () => {
-  // only post 5 jailbirds at one time
-  const BATCH_SIZE = randomIntFromInterval(5, 10);
+  // only post 5 to 10 jailbirds at one time
+  // const BATCH_SIZE = randomIntFromInterval(5, 10);
+  const BATCH_SIZE = 0;
   
   console.log('Beginning to post jailbirds to instagram.')
 
