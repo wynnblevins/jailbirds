@@ -1,5 +1,7 @@
 require("dotenv").config();
 const mongoose = require("mongoose");
+const _ = require("lodash");
+const cron = require('node-cron');
 const {
   createMultipleJailbirds,
   deleteOldJailbirds,
@@ -9,8 +11,6 @@ const { buildJailbirds: buildHenricoJailbirds } = require("./services/henricoScr
 const { buildJailbirds: buildRichmondJailbirds } = require("./services/richmondScraperService");
 const { postToInsta } = require('./services/instagramPostService');
 const { filterSavedJailbirds } = require('./services/jailbirdFilterService');
-const _ = require("lodash");
-const cron = require('node-cron');
 
 import { Types } from 'mongoose';
 

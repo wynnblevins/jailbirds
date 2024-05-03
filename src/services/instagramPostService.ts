@@ -3,6 +3,7 @@ import { Jailbird } from "../app";
 const { IgApiClient } = require('instagram-private-api');
 const { get } = require('request-promise');
 const { updateJailbird, findUnpostedJailbirds } = require('./jailbirdService');
+const { shuffle } = require('./shuffleService');
 
 const randomIntFromInterval = (min: number, max: number) => {  
   return Math.floor(Math.random() * (max - min + 1) + min);
@@ -27,11 +28,12 @@ const postToInsta = async () => {
   // only post 5 to 10 jailbirds at one time
   // const BATCH_SIZE = randomIntFromInterval(5, 10);
   const BATCH_SIZE = 0;
-  
+
   console.log('Beginning to post jailbirds to instagram.')
 
   const unpostedJailbirds: Jailbird[] = await findUnpostedJailbirds();
-  const jailbirdsToPost = unpostedJailbirds.slice(0, BATCH_SIZE)
+  const shuffledUnpostedJBs: Jailbird[] = shuffle(unpostedJailbirds);
+  const jailbirdsToPost = shuffledUnpostedJBs.slice(0, BATCH_SIZE)
 
   return new Promise<void>(async (finishPosting) => {
     const ig = new IgApiClient();
