@@ -43,8 +43,8 @@ const postToInsta = async () => {
         encoding: null, 
       });
     
-      // wait 10 to 20 minutes between posts
-      const randomWaitTime = randomIntFromInterval(600000, 1200000);
+      // wait 30 minutes to an hour between posts
+      const randomWaitTime = randomIntFromInterval(1200000, 2400000);
       await new Promise<void>(done => setTimeout(() => {
         performPost(ig, imageBuffer, jailbirdsToPost[i]).then(() => {
           done();
