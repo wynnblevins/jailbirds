@@ -77,7 +77,7 @@ const run = async () => {
 };
 
 
-cron.schedule('30 0 * * *', () => {
+cron.schedule('30 22 * * *', () => {
   run().then(() => {
     console.log('Program complete, stopping execution.');
   }).catch((e) => {
