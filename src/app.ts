@@ -76,7 +76,6 @@ const run = async () => {
   return await postToInsta();
 };
 
-
 cron.schedule('30 23 * * *', () => {
   run().then(() => {
     console.log('Program complete, stopping execution.');
