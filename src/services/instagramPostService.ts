@@ -1,8 +1,11 @@
 import { Jailbird } from "../app";
-
 const { IgApiClient } = require('instagram-private-api');
 const { get } = require('request-promise');
-const { updateJailbird, findUnpostedJailbirds } = require('./jailbirdService');
+const { 
+  updateJailbird, 
+  findUnpostedJailbirds, 
+  deleteJailbird 
+} = require('./jailbirdService');
 
 const randomIntFromInterval = (min: number, max: number) => {  
   return Math.floor(Math.random() * (max - min + 1) + min);
@@ -19,7 +22,8 @@ const performPost = async (ig, imageBuffer, jailbird: Jailbird) => {
 
     return await updateJailbird(jailbird.inmateID, { isPosted: true });
   } catch (e: any) {
-    console.error(`Encountered error ${e} while posting to instagram.`)
+    console.error(`Encountered error ${e} while posting to instagram. Deleting jailbird.`);
+    deleteJailbird(jailbird._id.toString())
   }
 };
 
