@@ -114,7 +114,8 @@ export const buildJailbirds = async (): Promise<Jailbird[]> => {
         '#jail',
         '#jailbirds',
         '#henricojail',
-        '#rva'
+        '#rva',
+        '#mugshots',
       ]
     };
 
