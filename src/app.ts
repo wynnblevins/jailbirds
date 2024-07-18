@@ -38,10 +38,12 @@ const scrapeWebpages = async (): Promise<Jailbird[]> => {
   return await buildHenricoJailbirds();
 };
 
-const pruneDB = async () => {
-  // delete jailbirds older than 30 days
+/**
+ * deletes jailbirds in db older than provided number of days
+ */
+const pruneDB = async (days: number) => {
   var d = new Date();
-  d.setDate(d.getDate() - 30);
+  d.setDate(d.getDate() - days);
   console.log(d.toString());
   await deleteOldJailbirds(d);
 };
@@ -55,8 +57,9 @@ const saveNewJailbirdsToDB = async (newJailbirds: Jailbird[]) => {
 };
 
 const run = async () => {
-  // delete any jailbirds older than 30 days
-  pruneDB();
+  // delete any jailbirds older than 20 days
+  const CUTOFF = 20;
+  pruneDB(CUTOFF);
 
   // get the current jailbirds from the webpages
   const webpageJailbirds = await scrapeWebpages();

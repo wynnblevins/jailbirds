@@ -22,8 +22,20 @@ const performPost = async (ig, imageBuffer, jailbird: Jailbird) => {
 
     return await updateJailbird(jailbird.inmateID, { isPosted: true });
   } catch (e: any) {
-    console.error(`Encountered error ${e} while posting to instagram. Deleting jailbird.`);
+    console.error(`Encountered error while posting to instagram. Deleting problematic jailbird.`);
     deleteJailbird(jailbird._id.toString())
+  }
+};
+
+const getImageBuffer = async (jailbird: Jailbird): Promise<object | undefined> => {
+  try {
+    return await get({
+      url: jailbird.picture,
+      encoding: null, 
+    });
+  } catch (e: any) {
+    console.error(`Encountered error while getting image buffer.  Deleting problematic jailbird.`);
+    deleteJailbird(jailbird);
   }
 };
 
@@ -41,20 +53,19 @@ const postToInsta = async () => {
     await ig.account.login(process.env.IG_USERNAME, process.env.IG_PASSWORD);
 
     for (let i = 0; i < jailbirdsToPost.length; i++) {
-      const imageBuffer = await get({
-        url: jailbirdsToPost[i].picture,
-        encoding: null, 
-      });
+      const imageBuffer = await getImageBuffer(jailbirdsToPost[i]);
     
-      // wait 30 minutes to an hour between posts
-      const randomWaitTime = randomIntFromInterval(1800000, 3600000);
-      console.log(`Waiting ${randomWaitTime} ms before posting.`);
-      
-      await new Promise<void>(done => setTimeout(() => {
-        performPost(ig, imageBuffer, jailbirdsToPost[i]).then(() => {
-          done();
-        });
-      }, randomWaitTime));        
+      if (imageBuffer) {
+        // wait 30 minutes to an hour between posts
+        const randomWaitTime = randomIntFromInterval(1800000, 3600000);
+        console.log(`Waiting ${randomWaitTime} ms before posting.`);
+        
+        await new Promise<void>(done => setTimeout(() => {
+          performPost(ig, imageBuffer, jailbirdsToPost[i]).then(() => {
+            done();
+          });
+        }, randomWaitTime));
+      }        
     }
 
     finishPosting();
