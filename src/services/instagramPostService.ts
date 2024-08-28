@@ -34,15 +34,15 @@ const getImageBuffer = async (jailbird: Jailbird): Promise<object | undefined> =
       encoding: null, 
     });
   } catch (e: any) {
+    console.error(e.message);
     console.error(`Encountered error while getting image buffer.  Deleting problematic jailbird.`);
     deleteJailbird(jailbird);
   }
 };
 
 const postToInsta = async () => {
-  const BATCH_SIZE = randomIntFromInterval(5, 10);
-  
-  console.log('Beginning to post jailbirds to instagram.')
+  const BATCH_SIZE = randomIntFromInterval(3, 7);
+  console.log(`Beginning to post ${BATCH_SIZE} jailbirds to instagram.`)
 
   const unpostedJailbirds: Jailbird[] = await findUnpostedJailbirds();
   const jailbirdsToPost = unpostedJailbirds.slice(0, BATCH_SIZE)
