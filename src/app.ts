@@ -1,5 +1,7 @@
-require("dotenv").config();
 const mongoose = require("mongoose");
+const _ = require("lodash");
+const cron = require('node-cron');
+const config = require('./utils/environment');
 const {
   createMultipleJailbirds,
   deleteOldJailbirds,
@@ -8,12 +10,8 @@ const {
 const { buildJailbirds: buildHenricoJailbirds } = require("./services/henricoScraperService");
 const { postToInsta } = require('./services/instagramPostService');
 const { filterSavedJailbirds } = require('./services/jailbirdFilterService');
-const _ = require("lodash");
-const cron = require('node-cron');
 
 import { Types } from 'mongoose';
-
-require("dotenv").config();
 
 interface Jailbird {
   _id?: Types.ObjectId,
@@ -28,7 +26,7 @@ interface Jailbird {
   hashtags: string[]
 }
 
-const mongoURL = `mongodb+srv://${process.env.MONGO_USERNAME}:${process.env.MONGO_PASSWORD}@cluster0.boa43ki.mongodb.net/${process.env.DATABASE_NAME}?retryWrites=true&w=majority`;
+const mongoURL = `mongodb+srv://${config.db.username}:${config.db.password}@${config.db.host}/${config.db.name}?retryWrites=true&w=majority`;
 
 mongoose.connect(mongoURL);
 
@@ -79,12 +77,12 @@ const run = async () => {
   return await postToInsta();
 };
 
-cron.schedule('30 23 * * *', () => {
+// cron.schedule('30 23 * * *', () => {
   run().then(() => {
     console.log('Program complete, stopping execution.');
   }).catch((e) => {
     console.log(`Program encountered error: ${e}`)
   });
-});
+// });
 
 export { Jailbird };
