@@ -72,12 +72,12 @@ const run = async () => {
   return await postToInsta();
 };
 
-// cron.schedule('30 23 * * *', () => {
+cron.schedule('30 23 * * *', () => {
   run().then(() => {
     console.log('Program complete, stopping execution.');
   }).catch((e) => {
     console.log(`Program encountered error: ${e}`)
   });
-// });
+});
 
 export { Jailbird };
