@@ -1,6 +1,7 @@
 import { Jailbird } from "../app";
 const { IgApiClient } = require('instagram-private-api');
 const { get } = require('request-promise');
+const config = require('../utils/environment');
 const { 
   updateJailbird, 
   findUnpostedJailbirds, 
@@ -41,7 +42,7 @@ const getImageBuffer = async (jailbird: Jailbird): Promise<object | undefined> =
 };
 
 const postToInsta = async () => {
-  const BATCH_SIZE = randomIntFromInterval(3, 7);
+  const BATCH_SIZE = randomIntFromInterval(+config.minJailbirdsCount, +config.maxJailbirdsCount);
   console.log(`Beginning to post ${BATCH_SIZE} jailbirds to instagram.`)
 
   const unpostedJailbirds: Jailbird[] = await findUnpostedJailbirds();
@@ -49,15 +50,18 @@ const postToInsta = async () => {
 
   return new Promise<void>(async (finishPosting) => {
     const ig = new IgApiClient();
-    ig.state.generateDevice(process.env.IG_USERNAME);
-    await ig.account.login(process.env.IG_USERNAME, process.env.IG_PASSWORD);
+    ig.state.generateDevice(config.ig.username);
+    await ig.account.login(config.ig.username, config.ig.password);
 
     for (let i = 0; i < jailbirdsToPost.length; i++) {
       const imageBuffer = await getImageBuffer(jailbirdsToPost[i]);
     
       if (imageBuffer) {
         // wait 30 minutes to an hour between posts
-        const randomWaitTime = randomIntFromInterval(1800000, 3600000);
+        const randomWaitTime = randomIntFromInterval(
+          +config.lowerWaitTimeBoundary, 
+          +config.upperWaitTimeBoundary
+        );
         console.log(`Waiting ${randomWaitTime} ms before posting.`);
         
         await new Promise<void>(done => setTimeout(() => {
