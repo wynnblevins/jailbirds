@@ -9,7 +9,7 @@ const jailbirdSchema = new mongoose.Schema(
     facility: String,
     age: Number,
     tags: String,
-    timestamp: String,
+    timestamp: Date,
     isPosted: Boolean,
     hashtags: [String]
   },

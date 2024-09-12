@@ -108,7 +108,7 @@ export const buildJailbirds = async (): Promise<Jailbird[]> => {
       picture: jailbirdPics[j],
       facility: 'HENRICO COUNTY REGIONAL JAIL',
       age: jailbirdSpans[i + 1],
-      timestamp: new Date().toISOString(),
+      timestamp: new Date(),
       isPosted: false,
       hashtags: [
         '#jail',
