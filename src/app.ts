@@ -21,7 +21,7 @@ interface Jailbird {
   picture: string,
   facility: string,
   age: number,
-  timestamp: string,
+  timestamp: Date,
   isPosted: boolean,
   hashtags: string[]
 }
@@ -39,11 +39,8 @@ const scrapeWebpages = async (): Promise<Jailbird[]> => {
 /**
  * deletes jailbirds in db older than provided number of days
  */
-const pruneDB = async (days: number) => {
-  var d = new Date();
-  d.setDate(d.getDate() - days);
-  console.log(d.toString());
-  await deleteOldJailbirds(d);
+const pruneDB = async () => {
+  await deleteOldJailbirds();
 };
 
 const saveNewJailbirdsToDB = async (newJailbirds: Jailbird[]) => {
@@ -55,9 +52,7 @@ const saveNewJailbirdsToDB = async (newJailbirds: Jailbird[]) => {
 };
 
 const run = async () => {
-  // delete any jailbirds older than 20 days
-  const CUTOFF = 20;
-  pruneDB(CUTOFF);
+  pruneDB();
 
   // get the current jailbirds from the webpages
   const webpageJailbirds = await scrapeWebpages();
