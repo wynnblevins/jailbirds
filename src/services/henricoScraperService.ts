@@ -55,7 +55,7 @@ export const buildJailbirds = async (): Promise<Jailbird[]> => {
   let jailbirds: Jailbird[] = [];
 
   // open up a headless chrome
-  console.log('Launching headless browser.')
+  console.log('Launching headless browser for Henrico page.');
   const browser = await puppeteer.launch({ headless: true });
 
   // go to the Henrico inmates page
