@@ -44,7 +44,6 @@ const scrapeWebpages = async (): Promise<Jailbird[]> => {
 const pruneDB = async (days: number) => {
   var d = new Date();
   d.setDate(d.getDate() - days);
-  console.log(d.toString());
   await deleteOldJailbirds(d);
 };
 
