@@ -46,7 +46,7 @@ const createJailbird = async (
   return await jailbird.save();
 };
 
-const deleteOldJailbirds = async (cutoffDate: Date) => {
+const deleteOldJailbirds = async () => {
   const thirtyDaysAgo = new Date(new Date().setDate(new Date().getDate() - 30));
   return await Jailbird.deleteMany({ timestamp: { $lte: thirtyDaysAgo } });
 };
