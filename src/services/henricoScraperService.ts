@@ -70,7 +70,6 @@ export const buildJailbirds = async (): Promise<Jailbird[]> => {
   } catch (e: any) {
     console.log(`Error encountered while going to ${inmatesPageURL}`);
   }
-  
 
   // click the search button
   console.log('Clicking search button.');
