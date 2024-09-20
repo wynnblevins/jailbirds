@@ -2,6 +2,7 @@ import { Jailbird } from "../app";
 
 const cheerio = require("cheerio");
 const axios = require("axios");
+const puppeteer = require("puppeteer");
 
 const inmatesPageURL: string = "https://webapp01.richmondnc.com/dcn/inmates";
 
@@ -91,15 +92,12 @@ export const buildJailbirds = async (): Promise<Jailbird[]> => {
         age: inmateAges[i],
         timestamp: new Date(),
         isPosted: false,
-        hashtags: [
-          '#richmondcityjail',
-          '#richmondjail', 
-          '#jailbirds',
-          '#lockedup', 
+        hashtags: [ 
+          '#jailbirds', 
           '#jail', 
-          '#rva', 
-          '#richmondva', 
-          '#richmond'
+          '#rva',  
+          '#richmond',
+          '#mugshots'
         ]
       };
 

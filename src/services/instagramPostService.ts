@@ -7,6 +7,7 @@ const {
   findUnpostedJailbirds, 
   deleteJailbird 
 } = require('./jailbirdService');
+const { shuffle } = require('./shuffleService')
 
 const randomIntFromInterval = (min: number, max: number) => {  
   return Math.floor(Math.random() * (max - min + 1) + min);
@@ -46,7 +47,8 @@ const postToInsta = async () => {
   console.log(`Beginning to post ${BATCH_SIZE} jailbirds to instagram.`)
 
   const unpostedJailbirds: Jailbird[] = await findUnpostedJailbirds();
-  const jailbirdsToPost = unpostedJailbirds.slice(0, BATCH_SIZE)
+  const unpostedAndShuffledJBs: Jailbird[] = shuffle(unpostedJailbirds);
+  const jailbirdsToPost = unpostedAndShuffledJBs.slice(0, BATCH_SIZE)
 
   return new Promise<void>(async (finishPosting) => {
     const ig = new IgApiClient();
