@@ -48,7 +48,6 @@ const scrapeWebpages = async (): Promise<Jailbird[]> => {
 /**
  * deletes older jailbirds to keep us from running out of space
  */
-
 const pruneDB = async () => {
   const RICHMOND_CITY_JAIL = 'RICHMOND CITY JAIL';
   const HENRICO_COUNTY_REGIONAL_JAIL = 'HENRICO COUNTY REGIONAL JAIL';
