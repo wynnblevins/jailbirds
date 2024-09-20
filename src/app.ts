@@ -4,18 +4,11 @@ const cron = require('node-cron');
 const config = require('./utils/environment');
 const {
   createMultipleJailbirds,
-<<<<<<< HEAD
-  deleteOldJailbirds,
-  findAllJailbirds,
-} = require("./services/jailbirdService");
-const { buildJailbirds: buildHenricoJailbirds } = require("./services/henricoScraperService");
-=======
   findAllJailbirds,
   deleteOldJailbirdsFromFacility,
 } = require("./services/jailbirdService");
 const { buildJailbirds: buildHenricoJailbirds } = require("./services/henricoScraperService");
 const { buildJailbirds: buildRichmondJailbirds } = require("./services/richmondScraperService");
->>>>>>> richmond-jail
 const { postToInsta } = require('./services/instagramPostService');
 const { filterSavedJailbirds } = require('./services/jailbirdFilterService');
 
