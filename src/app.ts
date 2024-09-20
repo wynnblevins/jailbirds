@@ -48,17 +48,7 @@ const scrapeWebpages = async (): Promise<Jailbird[]> => {
 /**
  * deletes older jailbirds to keep us from running out of space
  */
-<<<<<<< HEAD
-const pruneDB = async (days: number) => {
-  var d = new Date();
-  d.setDate(d.getDate() - days);
-  await deleteOldJailbirds(d);
-=======
 const pruneDB = async () => {
-<<<<<<< HEAD
-  await deleteOldJailbirds();
->>>>>>> a04792d (Storing jailbird timestamp as Date not string so old jailbirds get deleted)
-=======
   const RICHMOND_CITY_JAIL = 'RICHMOND CITY JAIL';
   const HENRICO_COUNTY_REGIONAL_JAIL = 'HENRICO COUNTY REGIONAL JAIL';
   const ONE_YEAR = 365;
@@ -83,7 +73,6 @@ const pruneDB = async () => {
     RICHMOND_CITY_JAIL,
     oneYearAgo
   );
->>>>>>> 026358e (now posting richmond inmates)
 };
 
 const saveNewJailbirdsToDB = async (newJailbirds: Jailbird[]) => {
