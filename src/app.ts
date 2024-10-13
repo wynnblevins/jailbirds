@@ -28,7 +28,6 @@ interface Jailbird {
 }
 
 const mongoURL = `mongodb+srv://${config.db.username}:${config.db.password}@${config.db.host}/${config.db.name}?retryWrites=true&w=majority`;
-
 mongoose.connect(mongoURL);
 
 const scrapeWebpages = async (): Promise<Jailbird[]> => {
@@ -38,8 +37,8 @@ const scrapeWebpages = async (): Promise<Jailbird[]> => {
   console.log("Scraping Henrico jailbird web page...");
   scraperPromises.push(buildHenricoJailbirds());
 
-  console.log("Scraping Richmond jailbird web page...");
-  scraperPromises.push(buildRichmondJailbirds());
+  // console.log("Scraping Richmond jailbird web page...");
+  // scraperPromises.push(buildRichmondJailbirds());
 
   const resolvedData = await Promise.all(scraperPromises);
   return resolvedData.flat(1);
@@ -104,7 +103,7 @@ const run = async () => {
   return await postToInsta();
 };
 
-cron.schedule('0 18 * * *', () => {
+cron.schedule('0 16 * * *', () => {
   run().then(() => {
     console.log('Program complete, stopping execution.');
   }).catch((e) => {
