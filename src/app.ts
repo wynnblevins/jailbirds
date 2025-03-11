@@ -124,6 +124,6 @@ cron.schedule('45 16 * * *', () => {
   }).catch((e) => {
     console.log(`Program encountered error: ${e}`)
   });
-// });
+});
 
 export { Jailbird };
