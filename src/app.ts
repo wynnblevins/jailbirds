@@ -9,7 +9,10 @@ const {
 } = require("./services/jailbirdService");
 const { buildJailbirds: buildHenricoJailbirds } = require("./services/henricoScraperService");
 const { postToInsta } = require('./services/instagramPostService');
-const { filterSavedJailbirds } = require('./services/jailbirdFilterService');
+const { 
+  filterSavedJailbirds,
+  filterBoringJailbirds
+} = require('./services/jailbirdFilterService');
 
 import { Types } from 'mongoose';
 
@@ -66,6 +69,31 @@ const saveNewJailbirdsToDB = async (newJailbirds: Jailbird[]) => {
   }
 };
 
+/**
+ * 
+ * Filters out Henrico jailbirds that are likely to be uninteresting 
+ * 
+ * @param jailbirds an array of henrico county jailbirds
+ * @param charge the charge we want to filter from the list of Jailbirds
+ * @returns a filtered list of Jailbirds
+ */
+const filterBoringHenricoJBs = (jailbirds: Jailbird[]) => {
+  const HENRICO_CONTEMPT_STR: string = 'OTHER OFFENSES-CONTEMPT OF COURT';
+  const HENRICO_PROBATION_VIOLATION_STR: string = 'OTHER OFFENSES-PROBATION VIOLATION';
+  const BORING_HENRICO_CHARGE_STRINGS = [
+    HENRICO_CONTEMPT_STR,
+    HENRICO_PROBATION_VIOLATION_STR
+  ];
+  
+  const filteredJailbirds = []
+  BORING_HENRICO_CHARGE_STRINGS.forEach((charge: string) => {
+    jailbirds = filterBoringJailbirds(jailbirds, charge);
+    filteredJailbirds.concat(jailbirds);
+  });
+
+  return jailbirds;
+};
+
 const run = async () => {
   pruneDB();
 
@@ -78,8 +106,11 @@ const run = async () => {
   // filter the webpage jailbirds we know about already
   const unsavedJailbirds = filterSavedJailbirds(allDbJailbirds, webpageJailbirds);
 
+  // filter out the boring jailbirds (ie Contempt, Probation Violations, etc)
+  const filteredUnsavedJBs = filterBoringHenricoJBs(unsavedJailbirds)
+
   // there will likely be duplicates in the combined array, remove the dupes
-  const uniqueJailbirds = _.uniqBy(unsavedJailbirds, "inmateID");
+  const uniqueJailbirds = _.uniqBy(filteredUnsavedJBs, "inmateID");
 
   await saveNewJailbirdsToDB(uniqueJailbirds);
 
@@ -93,6 +124,6 @@ cron.schedule('45 16 * * *', () => {
   }).catch((e) => {
     console.log(`Program encountered error: ${e}`)
   });
-});
+// });
 
 export { Jailbird };

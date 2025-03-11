@@ -47,4 +47,34 @@ const filterPostedJailbirds = async (jailbirds: Jailbird[]) => {
   });
 };
 
-module.exports = { filterPostedJailbirds, filterSavedJailbirds }
+const chargesAreAll = (chargeToOmit: string, jailbird: Jailbird) => {
+  const charges = jailbird.charges.split(',');
+
+  for (let i = 0; i < charges.length; i++) {
+    if (charges[i].trim() !== chargeToOmit) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * Given a list of jailbirds, filters the jailbirds with a
+ * single (and likely boring) charge which the caller wants ommitted
+ * 
+ * @param jailbirds 
+ * @param boringCharge
+ * @returns a filtered list of jailbirds
+ */
+const filterBoringJailbirds = (jailbirds: Jailbird[], boringCharge: string) => {
+  const filtered = jailbirds.filter((jb) => { 
+    return !chargesAreAll(boringCharge, jb) 
+  });
+  return filtered;
+};
+
+module.exports = { 
+  filterPostedJailbirds, 
+  filterSavedJailbirds,
+  filterBoringJailbirds,
+}
