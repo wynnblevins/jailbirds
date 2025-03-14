@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const _ = require("lodash");
 const cron = require('node-cron');
+const argv = require('minimist')(process.argv);
 const config = require('./utils/environment');
 const {
   createMultipleJailbirds,
@@ -9,9 +10,8 @@ const {
 } = require("./services/jailbirdService");
 const { buildJailbirds: buildHenricoJailbirds } = require("./services/henricoScraperService");
 const { buildJailbirds: buildRichmondJailbirds } = require("./services/richmondScraperService");
-const { postToInsta } = require('./services/instagramPostService');
+const { postToInsta, postJailbirdById } = require('./services/instagramPostService');
 const { filterSavedJailbirds } = require('./services/jailbirdFilterService');
-
 import { Types } from 'mongoose';
 
 interface Jailbird {
@@ -82,7 +82,7 @@ const saveNewJailbirdsToDB = async (newJailbirds: Jailbird[]) => {
   }
 };
 
-const run = async () => {
+const performRoutinePosting = async () => {
   pruneDB();
 
   // get the current jailbirds from the webpages
@@ -103,12 +103,25 @@ const run = async () => {
   return await postToInsta();
 };
 
-cron.schedule('0 16 * * *', () => {
-  run().then(() => {
+// check if we are performing the nightly batch or a manual run
+if (argv.manual) {
+  const inmateId = argv.manual;
+  const inmateIdStr = inmateId.toString();
+  postJailbirdById(inmateIdStr).then(() => {
     console.log('Program complete, stopping execution.');
   }).catch((e) => {
-    console.log(`Program encountered error: ${e}`)
+    console.error(`Program encountered error while performing manual post: ${e}`)
   });
-});
+  process.exit();
+} else {
+  // if not running in manual mode, start the cron job
+  cron.schedule('0 16 * * *', () => {
+    performRoutinePosting().then(() => {
+      console.log('Program complete, stopping execution.');
+    }).catch((e) => {
+      console.error(`Program encountered error: ${e}`);
+    });
+  });  
+}
 
 export { Jailbird };
