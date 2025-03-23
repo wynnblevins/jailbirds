@@ -8,7 +8,6 @@ const {
   deleteOldJailbirdsFromFacility,
 } = require("./services/jailbirdService");
 const { buildJailbirds: buildHenricoJailbirds } = require("./services/henricoScraperService");
-const { buildJailbirds: buildRichmondJailbirds } = require("./services/richmondScraperService");
 const { postToInsta } = require('./services/instagramPostService');
 const { filterSavedJailbirds } = require('./services/jailbirdFilterService');
 
@@ -103,7 +102,7 @@ const run = async () => {
   return await postToInsta();
 };
 
-cron.schedule('0 16 * * *', () => {
+cron.schedule('45 16 * * *', () => {
   run().then(() => {
     console.log('Program complete, stopping execution.');
   }).catch((e) => {
