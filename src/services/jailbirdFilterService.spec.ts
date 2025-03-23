@@ -2,30 +2,42 @@ const { createDummyJailbird } = require('../testUtils/mockDataGenerator');
 const { filterSavedJailbirds } = require('./jailbirdFilterService')
 
 describe('filterSavedJailbirds', () => {
+  let dummyJailbird0;
+  let dummyJailbird1;
+  let dummyJailbird2;
+  let dummyJailbird3;
+  let dummyJailbird4;
+  let dummyJailbird5;
+  let dummyJailbird6;
+  let dummyJailbird7;
+  let dummyJailbird8;
+  let dummyJailbird9;  
+  const allJailbirds = [];
+  
+  beforeEach(() => {
+    dummyJailbird0 = createDummyJailbird();
+    dummyJailbird1 = createDummyJailbird();
+    dummyJailbird2 = createDummyJailbird();
+    dummyJailbird3 = createDummyJailbird();
+    dummyJailbird4 = createDummyJailbird();
+    dummyJailbird5 = createDummyJailbird();
+    dummyJailbird6 = createDummyJailbird();
+    dummyJailbird7 = createDummyJailbird();
+    dummyJailbird8 = createDummyJailbird();
+    dummyJailbird9 = createDummyJailbird();
+
+    allJailbirds.push(dummyJailbird0);
+    allJailbirds.push(dummyJailbird1);
+    allJailbirds.push(dummyJailbird2);
+    allJailbirds.push(dummyJailbird3);
+    allJailbirds.push(dummyJailbird5);
+    allJailbirds.push(dummyJailbird6);
+    allJailbirds.push(dummyJailbird7);
+    allJailbirds.push(dummyJailbird8);
+    allJailbirds.push(dummyJailbird9);
+  })
+  
   it('returns expected unsaved jailbirds', () => {
-    const dummyJailbird0 = createDummyJailbird();
-    const dummyJailbird1 = createDummyJailbird();
-    const dummyJailbird2 = createDummyJailbird();
-    const dummyJailbird3 = createDummyJailbird();
-    const dummyJailbird4 = createDummyJailbird();
-    const dummyJailbird5 = createDummyJailbird();
-    const dummyJailbird6 = createDummyJailbird();
-    const dummyJailbird7 = createDummyJailbird();
-    const dummyJailbird8 = createDummyJailbird();
-    const dummyJailbird9 = createDummyJailbird();
-    
-    const webpageJailbirds = [
-      dummyJailbird0,
-      dummyJailbird1,
-      dummyJailbird2,
-      dummyJailbird3,
-      dummyJailbird4,
-      dummyJailbird5,
-      dummyJailbird6,
-      dummyJailbird7,
-      dummyJailbird8,
-      dummyJailbird9
-    ];
     const dbJailbirds = [
       dummyJailbird0,
       dummyJailbird2,
@@ -35,8 +47,8 @@ describe('filterSavedJailbirds', () => {
     ];
 
     const resultJbs = filterSavedJailbirds(
-        dbJailbirds, 
-        webpageJailbirds
+      dbJailbirds, 
+      allJailbirds
     );
 
     expect(resultJbs).toEqual([
