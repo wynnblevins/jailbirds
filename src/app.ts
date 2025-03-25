@@ -10,6 +10,7 @@ const {
 } = require("./services/jailbirdService");
 const { buildJailbirds: buildHenricoJailbirds } = require("./services/henricoScraperService");
 const { postToInsta, postJailbirdById } = require('./services/instagramPostService');
+const { buildJailbirds: buildRichmondJailbirds } = require("./services/richmondScraperService");
 const { filterSavedJailbirds } = require('./services/jailbirdFilterService');
 import { Types } from 'mongoose';
 
@@ -36,6 +37,9 @@ const scrapeWebpages = async (): Promise<Jailbird[]> => {
   console.log("Scraping Henrico jailbird web page...");
   scraperPromises.push(buildHenricoJailbirds());
 
+  console.log("Scraping Richmond jailbird web page...");
+  scraperPromises.push(buildRichmondJailbirds());
+
   const resolvedData = await Promise.all(scraperPromises);
   return resolvedData.flat(1);
 };
@@ -45,17 +49,31 @@ const scrapeWebpages = async (): Promise<Jailbird[]> => {
  */
 const pruneDB = async () => {
   const HENRICO_COUNTY_REGIONAL_JAIL = 'HENRICO COUNTY REGIONAL JAIL';
+  const RICHMOND_CITY_JAIL = 'RICHMOND CITY JAIL'
   const THIRTY_DAYS = 30;
-  
+  const ONE_YEAR = 365;
+
   const thirtyDaysAgo = new Date(
     new Date().setDate(new Date().getDate() - THIRTY_DAYS)
   );
+
+  const oneYearAgo = new Date(
+    new Date().setDate(new Date().getDate() - ONE_YEAR)
+  )
   
   // get rid of Henrico jailbirds more than thirty days old
   await deleteOldJailbirdsFromFacility(
     HENRICO_COUNTY_REGIONAL_JAIL,
     thirtyDaysAgo
   );
+
+  // get rid of Richmond jailbirds older than one year
+  await deleteOldJailbirdsFromFacility(
+    RICHMOND_CITY_JAIL,
+    oneYearAgo,
+  );
+
+  await deleteOldJailbirdsFromFacility()
 };
 
 const saveNewJailbirdsToDB = async (newJailbirds: Jailbird[]) => {
