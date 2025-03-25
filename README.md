@@ -34,3 +34,6 @@ export CHROME_DEVEL_SANDBOX=/usr/local/sbin/chrome-devel-sandbox
 
 ## To Run
 To start the project running locally first pull down node modules by running `yarn install`.  Next, run `yarn build` to compile the typescript code.  Finally, run `pm2 start out/app.js`.  You now will have the jailbirds code running within a pm2 process in the background. You can list the running pm2 processes to verify the jailbirds code is running by executing `pm2 list`.
+
+## To Run Tests
+You can run tests by running `yarn test`.

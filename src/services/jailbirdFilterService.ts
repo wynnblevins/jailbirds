@@ -38,8 +38,9 @@ const filterPostedJailbirds = async (jailbirds: Jailbird[]) => {
   const asyncResult = await asyncFilter(jailbirds, 
     async (jailbird: Jailbird) => {
       const result: Jailbird = await findJailbirdByInmateId(jailbird.inmateID);
-        return !result[0]?.isPosted;
-      });  
+      return !result[0]?.isPosted;
+    }
+  );  
   
   return new Promise<void>(async (done) => {  
     done(asyncResult);

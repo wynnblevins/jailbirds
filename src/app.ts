@@ -36,9 +36,6 @@ const scrapeWebpages = async (): Promise<Jailbird[]> => {
   console.log("Scraping Henrico jailbird web page...");
   scraperPromises.push(buildHenricoJailbirds());
 
-  // console.log("Scraping Richmond jailbird web page...");
-  // scraperPromises.push(buildRichmondJailbirds());
-
   const resolvedData = await Promise.all(scraperPromises);
   return resolvedData.flat(1);
 };
@@ -47,29 +44,17 @@ const scrapeWebpages = async (): Promise<Jailbird[]> => {
  * deletes older jailbirds to keep us from running out of space
  */
 const pruneDB = async () => {
-  const RICHMOND_CITY_JAIL = 'RICHMOND CITY JAIL';
   const HENRICO_COUNTY_REGIONAL_JAIL = 'HENRICO COUNTY REGIONAL JAIL';
-  const ONE_YEAR = 365;
   const THIRTY_DAYS = 30;
   
   const thirtyDaysAgo = new Date(
     new Date().setDate(new Date().getDate() - THIRTY_DAYS)
-  );
-  const oneYearAgo = new Date(
-    new Date().setDate(new Date().getDate() - ONE_YEAR)
   );
   
   // get rid of Henrico jailbirds more than thirty days old
   await deleteOldJailbirdsFromFacility(
     HENRICO_COUNTY_REGIONAL_JAIL,
     thirtyDaysAgo
-  );
-  
-  // richmond jailbirds usually stay in jail longer so
-  // get rid of Richmond jailbirds more than a year old
-  await deleteOldJailbirdsFromFacility(
-    RICHMOND_CITY_JAIL,
-    oneYearAgo
   );
 };
 
