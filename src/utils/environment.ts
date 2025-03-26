@@ -15,5 +15,8 @@ module.exports = {
     host: process.env.DATABASE_HOST,
     username: process.env.MONGO_USERNAME,
     password: process.env.MONGO_PASSWORD
+  },
+  keys: {
+    captchaReaderAPI: process.env.CAPTCHA_KEY
   }
 }
