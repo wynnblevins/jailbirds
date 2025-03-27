@@ -4,7 +4,7 @@ const fs = require('fs');
 const readline = require('readline');
 const puppeteer = require("puppeteer");
 const TwoCaptcha = require("@2captcha/captcha-solver")
-const config = require('./utils/environment');
+const config = require('../utils/environment');
 
 const inmatesPageURL: string = "https://omsweb.secure-gps.com/jtclientweb/jailtracker/index/Richmond_Co_VA";
 const solver = new TwoCaptcha.Solver(config.keys.captchaReaderAPI);
@@ -95,8 +95,8 @@ async function processLineByLine(fileName: string) {
 
 
 const doJBSearches = async (searchesToPerform: number): Promise<Jailbird[]> => {
-  const namesFilename = 'names.txt';
-  processLineByLine(namesFilename);  
+  const NAMES_FILE_PATH = '../names.txt';
+  processLineByLine(NAMES_FILE_PATH);  
   
   return null;
 };
