@@ -91,7 +91,7 @@ const filterBoringHenricoJBs = (jailbirds: Jailbird[]) => {
     filteredJailbirds.concat(jailbirds);
   });
 
-  return jailbirds;
+  return filteredJailbirds;
 };
 
 const run = async () => {
