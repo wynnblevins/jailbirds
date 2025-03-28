@@ -72,8 +72,6 @@ const pruneDB = async () => {
     RICHMOND_CITY_JAIL,
     oneYearAgo,
   );
-
-  await deleteOldJailbirdsFromFacility()
 };
 
 const saveNewJailbirdsToDB = async (newJailbirds: Jailbird[]) => {

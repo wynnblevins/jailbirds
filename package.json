@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "jest",
-    "build": "node_modules/typescript/bin/tsc && cp resources/names.txt out/names.txt",
+    "build": "node_modules/typescript/bin/tsc",
     "start": "node out/app.js"
   },
   "author": "",

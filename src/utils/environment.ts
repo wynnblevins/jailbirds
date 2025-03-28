@@ -17,6 +17,6 @@ module.exports = {
     password: process.env.MONGO_PASSWORD
   },
   keys: {
-    captchaReaderAPI: process.env.CAPTCHA_KEY
+    captchaAPIKey: process.env.CAPTCHA_KEY
   }
 }

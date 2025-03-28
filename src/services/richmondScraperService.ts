@@ -1,22 +1,24 @@
 import { Jailbird } from "../app";
-import { getRandNumInRange } from "./randomNumberService";
-const fs = require('fs');
-const readline = require('readline');
+const { getRandNumInRange } = require('./randomNumberService');
 const puppeteer = require("puppeteer");
-const TwoCaptcha = require("@2captcha/captcha-solver")
-const config = require('../utils/environment');
-
+const { solveRichmondCaptcha: solveCaptcha } = require('./capchaService');
 const inmatesPageURL: string = "https://omsweb.secure-gps.com/jtclientweb/jailtracker/index/Richmond_Co_VA";
-const solver = new TwoCaptcha.Solver(config.keys.captchaReaderAPI);
+const names = require('../data/names');
 
 const proveHumanity = async (page) => {
-  const CAPTCHA_TEXT_FIELD_ID = '#captchaCode';
-
   try {
-    const captchaResult = await solveCaptcha(page);  
+    const CAPTCHA_TEXT_FIELD_ID = '#captchaCode';
+    const CAPTCHA_IMG_ID = '#img-captcha';
+
+    // solve the captcha answer
+    await page.waitForSelector(CAPTCHA_IMG_ID);
+    const captchaSrc = await page.$eval(CAPTCHA_IMG_ID, (el) => el.getAttribute('src'));
+    const { data: { request: captchaAnswer } } = await solveCaptcha(captchaSrc);
+  
+    // enter the captch answer on the web page
     await page.waitForSelector(CAPTCHA_TEXT_FIELD_ID);
     await page.focus(CAPTCHA_TEXT_FIELD_ID); //you need to focus on the textField
-    await page.type(CAPTCHA_TEXT_FIELD_ID, captchaResult.data);
+    await page.type(CAPTCHA_TEXT_FIELD_ID, captchaAnswer);
 
     // get the validate button and click it
     let buttons = await page.$$('button.btn');
@@ -26,23 +28,7 @@ const proveHumanity = async (page) => {
   }
 };
 
-const solveCaptcha = async (page) => {
-  const CAPTCHA_IMG_ID = '#img-captcha';
-  await page.waitForSelector(CAPTCHA_IMG_ID);
-  const captchaSrc = await page.$eval(CAPTCHA_IMG_ID, (el) => el.getAttribute('src'));
-
-  return solver.imageCaptcha({
-    body: captchaSrc,
-    case: true,
-    numeric: 4,
-    min_len: 3,
-    max_len: 5
-  });
-}; 
-
 export const buildJailbirds = async (): Promise<Jailbird[]> => {
-  let  jailbirds: Jailbird[] = [];
-  
   console.log('Launching headless browser for Richmond page.');
   const browser = await puppeteer.launch({ 
     headless: false,
@@ -58,45 +44,63 @@ export const buildJailbirds = async (): Promise<Jailbird[]> => {
       timeout: 10000,
     });
   } catch (e: any) {
-    console.log(`Error encountered while loading initial captcha page at ${inmatesPageURL}`);
+    console.error(`Error encountered while loading initial captcha page at ${inmatesPageURL}`);
   }
 
   // get past the captcha screen
-  await proveHumanity(page);
-
-  // TODO: move these values to .env file
-  const upper = 10;
-  const lower = 5;
+  try {
+    await proveHumanity(page);
+  } catch (e: any) {
+    console.error(`Error encounted while proving humanity`, e);
+  }
   
   // begin performing searches
-  const numOfSearches = getRandNumInRange(lower, upper);
-  
-  
-  await doJBSearches(numOfSearches);
+  const jailbirds = await doJBSearches(page);
 
-  return jailbirds;
+  return null;
 };
 
-async function processLineByLine(fileName: string) {
-  const fileStream = fs.createReadStream(fileName);
-
-  const rl = readline.createInterface({
-    input: fileStream,
-    crlfDelay: Infinity
-  });
-  // Note: we use the crlfDelay option to recognize all instances of CR LF
-  // ('\r\n') in input.txt as a single line break.
-
-  for await (const line of rl) {
-    // Each line in input.txt will be successively available here as `line`.
-    console.log(`Line from file: ${line}`);
-  }
+const getRandomSubset = (arr, size) => {
+  const shuffled = [...arr].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, size);
 }
 
+const doJBSearches = async (page): Promise<Jailbird[]> => {
+  // TODO: move these values to .env file
+  const upper = 5;
+  const lower = 1;
+  const numOfSearches = getRandNumInRange(lower, upper)
+  const namesSubset = getRandomSubset(names, numOfSearches);
 
-const doJBSearches = async (searchesToPerform: number): Promise<Jailbird[]> => {
-  const NAMES_FILE_PATH = '../names.txt';
-  processLineByLine(NAMES_FILE_PATH);  
-  
+  for (let i = 0; i < namesSubset.length; i++) {
+    const jailbirds: Jailbird[] = await doSearch(page, namesSubset[i]);
+    if (jailbirds.length) {
+      console.log(`richmond jailbirds found! ${JSON.stringify(jailbirds)}`);
+    }
+  }
+
+  return null;
+};
+
+const doSearch = async (page, name: string): Promise<Jailbird[]> => {
+  // enter the search text
+  const FIRST_NAME_SEARCH_BOX_ID = '#searchFirstName';
+  await page.waitForSelector(FIRST_NAME_SEARCH_BOX_ID);
+  await page.focus(FIRST_NAME_SEARCH_BOX_ID);
+  await page.type(FIRST_NAME_SEARCH_BOX_ID, name);
+
+  // find and click the search button
+  const searchButtonSelector = '.form-group.btn.btn-primary';
+  const button = await page.$(searchButtonSelector);
+  await button.click();
+
+  const tableData = await page.$$eval('table tbody tr td', (tds) =>
+    tds.map((td) => {
+        return td.innerText;
+    })
+  );
+
+  // table data now contains a cell by cell list of scraped table data  
+  console.log(tableData);
   return null;
 };
