@@ -130,6 +130,6 @@ export const buildJailbirds = async (): Promise<Jailbird[]> => {
   console.log('Closing browser session');
   await browser.close();
 
-  console.log(`Returning ${jailbirds.length} jailbirds from scraper service.`);
+  console.log(`Returning ${jailbirds.length} jailbirds from henrico scraper service.`);
   return jailbirds;
 };
