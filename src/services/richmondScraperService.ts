@@ -74,7 +74,7 @@ const doJBSearches = async (page): Promise<Jailbird[]> => {
 
   for (let i = 0; i < namesSubset.length; i++) {
     const jailbirds: Jailbird[] = await doSearch(page, namesSubset[i]);
-    if (jailbirds.length) {
+    if (jailbirds?.length) {
       console.log(`richmond jailbirds found! ${JSON.stringify(jailbirds)}`);
     }
   }
@@ -91,16 +91,96 @@ const doSearch = async (page, name: string): Promise<Jailbird[]> => {
 
   // find and click the search button
   const searchButtonSelector = '.form-group.btn.btn-primary';
-  const button = await page.$(searchButtonSelector);
-  await button.click();
+  const searchButton = await page.$(searchButtonSelector);
+  await searchButton.click();
 
+  await page.waitForSelector('p label');
+
+  const viewMoreButtonsSelector = '.btn.btn-primary';
+  const viewMoreButtons = await page.$$(viewMoreButtonsSelector);
+
+  // there's the possibility there wont be any results for any given name
+  if (viewMoreButtons.length > 1) {
+    // the search button matches the .btn.btn-primary class
+    // so start looping at 2nd button and view each jailbird's individual page
+    for (let i = 1; i < viewMoreButtons.length; i++) {
+      viewMoreButtons[i].click();
+      
+      await buildJailbird(page);
+    }
+  }
+  
+  return null;
+};
+
+const buildJailbird = async (page) => {
+  const RICHMOND_CITY_JAIL = 'RICHMOND CITY JAIL';
+  const INMATE_ID_NDX = 6;
+
+  // get jailbird mugshot
+  const imgUrl = await page.$('.img-thumbnail');
+  
+  // scrape table data which contains jailbird details
+  await page.waitForSelector('#detailsOfOffender');
   const tableData = await page.$$eval('table tbody tr td', (tds) =>
     tds.map((td) => {
         return td.innerText;
     })
   );
 
-  // table data now contains a cell by cell list of scraped table data  
-  console.log(tableData);
-  return null;
+  // get jailbird name
+  const name = buildNameStr(tableData);
+
+  // build out charge strings for jailbird
+  const chargeSpans = await page.$$('.col-12.table.table-striped.table-hover > h5');
+  const charges = buildChargesStr(chargeSpans);
+  
+  // get jailbird age
+  const age = getAge(tableData);
+
+  // construct jailbird from scraped information
+  const jailbird: Jailbird = {
+    charges: charges,
+    inmateID: tableData[INMATE_ID_NDX],
+    name: name,
+    picture: imgUrl,
+    facility: RICHMOND_CITY_JAIL,
+    age: age,
+    timestamp: new Date(),
+    isPosted: false,
+    hashtags: [
+      '#jail',
+      '#jailbirds',
+      '#rva',
+      '#mugshots',
+    ]
+  };
+
+  return jailbird;
+}
+
+const buildNameStr = (jailbirdData: string[]): string => {
+  const LAST_NAME_NDX = 1;
+  const FIRST_NAME_NDX = 2;
+  const MIDDLE_NAME_NDX = 3;
+
+  const lastName = jailbirdData[LAST_NAME_NDX];
+  const firstName = jailbirdData[FIRST_NAME_NDX];
+  const middleName = jailbirdData[MIDDLE_NAME_NDX];
+
+  return `${firstName} ${middleName} ${lastName}`;
+};
+
+const buildChargesStr = (charges): string => {
+  
+
+  return '';
+};
+
+const getAge = (jailbirdData: string[]): number => {
+  const CURRENT_AGE_LABEL = 'Current Age';
+  const CURRENT_AGE_LABEL_NDX = jailbirdData.indexOf(CURRENT_AGE_LABEL);
+  const CURRENT_AGE_NDX = CURRENT_AGE_LABEL_NDX + 1;
+  const age = jailbirdData[CURRENT_AGE_NDX];
+  return parseInt(age);
 };
