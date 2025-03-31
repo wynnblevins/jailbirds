@@ -4,6 +4,8 @@ const puppeteer = require("puppeteer");
 const { solveRichmondCaptcha: solveCaptcha } = require('./capchaService');
 const inmatesPageURL: string = "https://omsweb.secure-gps.com/jtclientweb/jailtracker/index/Richmond_Co_VA";
 const names = require('../data/names');
+const { base64ToImage } = require('./base64ToImgService');
+const fs = require('fs');
 
 const proveHumanity = async (page) => {
   try {
@@ -54,10 +56,9 @@ export const buildJailbirds = async (): Promise<Jailbird[]> => {
     console.error(`Error encounted while proving humanity`, e);
   }
   
-  // begin performing searches
-  const jailbirds = await doJBSearches(page);
-
-  return null;
+  // get a list of jailbirds from the Richmond Jail webpage
+  const webpageJailbirds: Jailbird[] = await doJBSearches(page);
+  return webpageJailbirds;
 };
 
 const getRandomSubset = (arr, size) => {
@@ -66,60 +67,80 @@ const getRandomSubset = (arr, size) => {
 }
 
 const doJBSearches = async (page): Promise<Jailbird[]> => {
+  let webpageJailbirds: Jailbird[] = [];
+  
   // TODO: move these values to .env file
-  const upper = 5;
-  const lower = 1;
+  const upper = 3;
+  const lower = 3;
   const numOfSearches = getRandNumInRange(lower, upper)
   const namesSubset = getRandomSubset(names, numOfSearches);
 
   for (let i = 0; i < namesSubset.length; i++) {
     const jailbirds: Jailbird[] = await doSearch(page, namesSubset[i]);
     if (jailbirds?.length) {
-      console.log(`richmond jailbirds found! ${JSON.stringify(jailbirds)}`);
+      webpageJailbirds = [...webpageJailbirds, ...jailbirds];
     }
   }
 
-  return null;
+  return webpageJailbirds;
 };
 
 const doSearch = async (page, name: string): Promise<Jailbird[]> => {
-  // enter the search text
+  let webpageJailbirds: Jailbird[] = [];
+  const OFFENDER_DETAILS_ID = '#detailsOfOffender';
+
+  // focus on the first name input
   const FIRST_NAME_SEARCH_BOX_ID = '#searchFirstName';
   await page.waitForSelector(FIRST_NAME_SEARCH_BOX_ID);
   await page.focus(FIRST_NAME_SEARCH_BOX_ID);
-  await page.type(FIRST_NAME_SEARCH_BOX_ID, name);
 
+  // type the given name into the first name search box
+  const firstNameSearch = await page.$(FIRST_NAME_SEARCH_BOX_ID);
+  await firstNameSearch.click({ clickCount: 3 })
+  await firstNameSearch.type(name);
+  
   // find and click the search button
   const searchButtonSelector = '.form-group.btn.btn-primary';
   const searchButton = await page.$(searchButtonSelector);
   await searchButton.click();
 
+  // wait for search results to come back before proceeding
   await page.waitForSelector('p label');
 
-  const viewMoreButtonsSelector = '.btn.btn-primary';
-  const viewMoreButtons = await page.$$(viewMoreButtonsSelector);
+  let viewMoreBtns = await getViewButtons(page);
 
   // there's the possibility there wont be any results for any given name
-  if (viewMoreButtons.length > 1) {
+  if (viewMoreBtns.length > 1) {
     // the search button matches the .btn.btn-primary class
     // so start looping at 2nd button and view each jailbird's individual page
-    for (let i = 1; i < viewMoreButtons.length; i++) {
-      viewMoreButtons[i].click();
+    for (let i = 1; i < viewMoreBtns.length; i++) {
+      // expand the jailbird details accordion (by clicking "view more" button)
+      await viewMoreBtns[i].click();
       
-      await buildJailbird(page);
+      // wait for offender details to be displayed
+      await page.waitForSelector(OFFENDER_DETAILS_ID);
+
+      const jailbird = await buildJailbird(page);
+      if (jailbird) {
+        webpageJailbirds.push(jailbird);
+      }
+
+      const viewLessBtns = await getButtonsByText(page, "View Less");
+      if (viewLessBtns[0]) {
+        viewLessBtns[0].click();
+        
+        // we're done with this particular jailbird, close the details view
+        await page.waitForSelector(OFFENDER_DETAILS_ID, { hidden: true });
+      }
     }
   }
   
-  return null;
+  return webpageJailbirds;
 };
 
-const buildJailbird = async (page) => {
+const buildJailbird = async (page): Promise<Jailbird> => {
   const RICHMOND_CITY_JAIL = 'RICHMOND CITY JAIL';
-  const INMATE_ID_NDX = 6;
 
-  // get jailbird mugshot
-  const imgUrl = await page.$('.img-thumbnail');
-  
   // scrape table data which contains jailbird details
   await page.waitForSelector('#detailsOfOffender');
   const tableData = await page.$$eval('table tbody tr td', (tds) =>
@@ -129,35 +150,95 @@ const buildJailbird = async (page) => {
   );
 
   // get jailbird name
-  const name = buildNameStr(tableData);
+  const viewLessStr: string = 'View Less';
+  const tableDataJBLength = 7; // each jb row has a length of 7 table cols
+  const viewLessNdx = tableData.indexOf(viewLessStr);
+  const tableRowData = tableData.slice(viewLessNdx, viewLessNdx + tableDataJBLength)
+  const name: string = buildNameStr(tableRowData);
+  const inmateId = getInmateIdStr(tableRowData);
 
   // build out charge strings for jailbird
-  const chargeSpans = await page.$$('.col-12.table.table-striped.table-hover > h5');
-  const charges = buildChargesStr(chargeSpans);
+  const chargesArr: string[] = await page.$$('.col-12.table.table-striped.table-hover > h5', (h5s) =>
+    h5s.map((h5) => {
+        return h5.innerText;
+    })
+  );
+  const charges: string = await buildChargesStr(chargesArr);
   
   // get jailbird age
   const age = getAge(tableData);
 
-  // construct jailbird from scraped information
-  const jailbird: Jailbird = {
-    charges: charges,
-    inmateID: tableData[INMATE_ID_NDX],
-    name: name,
-    picture: imgUrl,
-    facility: RICHMOND_CITY_JAIL,
-    age: age,
-    timestamp: new Date(),
-    isPosted: false,
-    hashtags: [
-      '#jail',
-      '#jailbirds',
-      '#rva',
-      '#mugshots',
-    ]
-  };
+  // get jailbird mugshot
+  const imgs = await page.$$eval('img.img-thumbnail[src]', imgs => imgs.map(img => img.getAttribute('src')));
+  const picture = imgs[0];
+  const formattedName = `${name.replaceAll(' ', '_')}.gif`;
+  const base64Data = picture?.replace(/^data:image\/gif;base64,/, "");
+  const imgPath = `out/images/${formattedName}`
+  
+  try {
+    // write the base64 string to a local image for later uploads
+    if (base64Data) {
+      base64ToImage(base64Data, imgPath);
 
-  return jailbird;
+      // construct jailbird from scraped information
+      const jailbird: Jailbird = {
+        charges: charges,
+        inmateID: inmateId,
+        name: name,
+        picture: imgPath,
+        facility: RICHMOND_CITY_JAIL,
+        age: age,
+        timestamp: new Date(),
+        isPosted: false,
+        hashtags: [
+          '#jail',
+          '#jailbirds',
+          '#rva',
+          '#mugshots',
+        ]
+      };
+
+      return jailbird;
+    } else {
+      throw new Error(`base64Data for image path ${imgPath} is falsy`);
+    }
+  } catch (e: any) {
+    console.error('Error encountered while building jailbird', e);
+    return Promise.resolve(null);
+  }
 }
+
+
+/**
+ * @param page the puppeteer page object
+ * @param btnText the text of the button to search for
+ * @returns an array of buttons that match the provided text
+ */
+const getButtonsByText = async (page, btnText: string) => {
+  const resultBtns = [];
+  const viewButtons = await getViewButtons(page);
+  for (let i = 0; i < viewButtons.length; i++) {
+    const buttonText = await (await viewButtons[i].getProperty('textContent')).jsonValue();
+    
+    // for some idiotic reason there's whitespace at the start/end of the button text so trim it
+    const trimmedBtnText = buttonText.trim();
+    
+    if (trimmedBtnText === btnText) {
+      resultBtns.push(viewButtons[i]);
+    }
+  }
+  return resultBtns;
+};
+
+/**
+ * @param page 
+ * @returns an array of puppeteer buttons for the given page
+ */
+const getViewButtons = async (page) => {
+  const viewButtonsSelector = '.btn.btn-primary';
+  const viewButtons = await page.$$(viewButtonsSelector);
+  return viewButtons;
+};
 
 const buildNameStr = (jailbirdData: string[]): string => {
   const LAST_NAME_NDX = 1;
@@ -171,14 +252,45 @@ const buildNameStr = (jailbirdData: string[]): string => {
   return `${firstName} ${middleName} ${lastName}`;
 };
 
-const buildChargesStr = (charges): string => {
-  
+const getInmateIdStr = (jailbirdData: string[]): string => {
+  const INMATE_ID_NDX = 6;
+  return jailbirdData[INMATE_ID_NDX];
+};
 
-  return '';
+const buildChargesStr = async (charges): Promise<string> => {
+  let chargesStr = '';
+  const chargesMap = {};
+
+  // build a map of the current inmate's charges and their counts
+  for (let i = 0; i < charges.length; i++) {
+    const charge = charges[i];
+    let chargeHandle = await charge.getProperty('innerText');
+    let chargeText = await chargeHandle.jsonValue();
+    if (chargesMap.hasOwnProperty(chargeText)) {
+      chargesMap[chargeText]++; 
+    } else {
+      chargesMap[chargeText] = 1;
+    }
+  }
+
+  // append the charges into one long string
+  for (let charge in chargesMap) {
+    if (charges[charge] > 1) {
+      chargesStr += `${charge} (x${charges[charge]}), `;
+    } else {
+      chargesStr += `${charge}, `;
+    }
+  }
+
+  if (chargesStr.endsWith(', ')) {
+    chargesStr = chargesStr.slice(0, -2); 
+  }
+  
+  return chargesStr;
 };
 
 const getAge = (jailbirdData: string[]): number => {
-  const CURRENT_AGE_LABEL = 'Current Age';
+  const CURRENT_AGE_LABEL = 'Current Age:';
   const CURRENT_AGE_LABEL_NDX = jailbirdData.indexOf(CURRENT_AGE_LABEL);
   const CURRENT_AGE_NDX = CURRENT_AGE_LABEL_NDX + 1;
   const age = jailbirdData[CURRENT_AGE_NDX];

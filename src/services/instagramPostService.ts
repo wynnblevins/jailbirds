@@ -9,6 +9,10 @@ const {
   findJailbirdByInmateId
 } = require('./jailbirdService');
 const { shuffle } = require('./shuffleService')
+const { readFile } = require('fs');
+const { promisify } = require('util');
+const fs = require('fs');
+const path = require('node:path');
 
 const randomIntFromInterval = (min: number, max: number) => {  
   return Math.floor(Math.random() * (max - min + 1) + min);
@@ -30,7 +34,7 @@ const performPost = async (ig, imageBuffer, jailbird: Jailbird) => {
   }
 };
 
-const getImageBuffer = async (jailbird: Jailbird): Promise<object | undefined> => {
+const getHenricoImageBuffer = async (jailbird: Jailbird): Promise<object | undefined> => {
   try {
     return await get({
       url: jailbird.picture,
@@ -77,22 +81,12 @@ const postBatchToInsta = async () => {
     await ig.account.login(config.ig.username, config.ig.password);
 
     for (let i = 0; i < jailbirdsToPost.length; i++) {
-      const imageBuffer = await getImageBuffer(jailbirdsToPost[i]);
-    
-      if (imageBuffer) {
-        // wait 30 minutes to an hour between posts
-        const randomWaitTime = randomIntFromInterval(
-          +config.lowerWaitTimeBoundary, 
-          +config.upperWaitTimeBoundary
-        );
-        console.log(`Waiting ${randomWaitTime} ms before posting.`);
-        
-        await new Promise<void>(done => setTimeout(() => {
-          performPost(ig, imageBuffer, jailbirdsToPost[i]).then(() => {
-            done();
-          });
-        }, randomWaitTime));
-      }        
+      if (jailbirdsToPost[i].facility === 'HENRICO COUNTY REGIONAL JAIL') {
+        await postHenricoJB(ig, jailbirdsToPost[i]);
+      } else {
+        await postRichmondJB(ig, jailbirdsToPost[i]);
+      }
+              
     }
 
     finishPosting();

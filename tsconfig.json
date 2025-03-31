@@ -4,5 +4,8 @@
         "module": "CommonJS",
         "outDir": "out",
         "sourceMap": true,
+        "lib": [
+          "ES2021.String"
+        ]
     }
 }

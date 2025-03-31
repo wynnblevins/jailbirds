@@ -3,6 +3,7 @@ const _ = require("lodash");
 const cron = require('node-cron');
 const argv = require('minimist')(process.argv);
 const config = require('./utils/environment');
+const { JAILS } = require('./utils/strings');
 const {
   createMultipleJailbirds,
   findAllJailbirds,
@@ -35,10 +36,12 @@ const scrapeWebpages = async (): Promise<Jailbird[]> => {
   
   // scrape the Henrico mugshot web
   console.log("Scraping Henrico jailbird web page...");
-  scraperPromises.push(buildHenricoJailbirds());
+  const henricoJbs = buildHenricoJailbirds()
+  scraperPromises.push(henricoJbs);
 
   console.log("Scraping Richmond jailbird web page...");
-  scraperPromises.push(buildRichmondJailbirds());
+  const richmondJbs = buildRichmondJailbirds()
+  scraperPromises.push(richmondJbs);
 
   const resolvedData = await Promise.all(scraperPromises);
   return resolvedData.flat(1);
@@ -48,8 +51,6 @@ const scrapeWebpages = async (): Promise<Jailbird[]> => {
  * deletes older jailbirds to keep us from running out of space
  */
 const pruneDB = async () => {
-  const HENRICO_COUNTY_REGIONAL_JAIL = 'HENRICO COUNTY REGIONAL JAIL';
-  const RICHMOND_CITY_JAIL = 'RICHMOND CITY JAIL'
   const THIRTY_DAYS = 30;
   const ONE_YEAR = 365;
 
@@ -63,13 +64,13 @@ const pruneDB = async () => {
   
   // get rid of Henrico jailbirds more than thirty days old
   await deleteOldJailbirdsFromFacility(
-    HENRICO_COUNTY_REGIONAL_JAIL,
+    JAILS.HENRICO_COUNTY_REGIONAL_JAIL,
     thirtyDaysAgo
   );
 
   // get rid of Richmond jailbirds older than one year
   await deleteOldJailbirdsFromFacility(
-    RICHMOND_CITY_JAIL,
+    JAILS.RICHMOND_CITY_JAIL,
     oneYearAgo,
   );
 };
@@ -100,7 +101,7 @@ const performBatchPost = async () => {
   await saveNewJailbirdsToDB(uniqueJailbirds);
 
   // the remaining jailbirds will be what we want to post to instagram, do that here
-  return await postToInsta();
+  await postToInsta();
 };
 
 // check if we are performing the nightly batch or a manual run

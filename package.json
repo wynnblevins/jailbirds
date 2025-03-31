@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "jest",
-    "build": "node_modules/typescript/bin/tsc",
+    "build": "node_modules/typescript/bin/tsc && mkdir -p out/images",
     "start": "node out/app.js",
     "startManualBatch": "node out/app.js -m",
     "manuallyPost": "node out/app.js -m -i ${0}"

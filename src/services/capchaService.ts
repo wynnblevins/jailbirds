@@ -56,7 +56,7 @@ const solveRichmondCaptcha = async (captchaBody: string) => {
   const submissionResponse = await submitRichmondCaptcha(captchaBody)
 
   return new Promise((resolve, reject) => {
-    delay(10000).then(async () => {
+    delay(20000).then(async () => {
       const result = await getRichmondCaptchaSolution(submissionResponse.data);  
       resolve(result);
     });
