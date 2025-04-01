@@ -5,7 +5,8 @@ const config = require('../utils/environment');
 const { 
   updateJailbird, 
   findUnpostedJailbirds, 
-  deleteJailbird 
+  deleteJailbird,
+  findJailbirdByInmateId
 } = require('./jailbirdService');
 const { shuffle } = require('./shuffleService')
 
@@ -42,7 +43,27 @@ const getImageBuffer = async (jailbird: Jailbird): Promise<object | undefined> =
   }
 };
 
-const postToInsta = async () => {
+const postJailbirdById = async (inmateId: string) => {
+  const jailbirdToPost = await findJailbirdByInmateId(inmateId);
+  // const jailbirdToPost = await findUnpostedJailbirds();
+  const ig = new IgApiClient();
+  ig.state.generateDevice(config.ig.username);
+  await ig.account.login(config.ig.username, config.ig.password);
+  
+  const imageBuffer = await getImageBuffer(jailbirdToPost);
+
+  if (imageBuffer) {
+    try {
+      await performPost(ig, imageBuffer, jailbirdToPost)
+    } catch (e: any) {
+      console.error(e);
+    }
+  } else {
+    console.error(`No jailbird for ID ${inmateId} found.`)
+  }        
+}
+
+const postBatchToInsta = async () => {
   const BATCH_SIZE = randomIntFromInterval(+config.minJailbirdsCount, +config.maxJailbirdsCount);
   console.log(`Beginning to post ${BATCH_SIZE} jailbirds to instagram.`)
 
@@ -78,4 +99,7 @@ const postToInsta = async () => {
   });
 }
 
-module.exports = { postToInsta };
+module.exports = { 
+  postBatchToInsta,
+  postJailbirdById
+};

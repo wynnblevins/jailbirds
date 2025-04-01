@@ -37,3 +37,9 @@ To start the project running locally first pull down node modules by running `ya
 
 ## To Run Tests
 You can run tests by running `yarn test`.
+
+## To Trigger A Manual Batch Posting
+You can run the posting routine manually by running `yarn startManualBatch`.
+
+## To Manually Post A Jailbird
+You can also opt to manually post a jailbird by their ID number.  In order to do this, obtain the inmate ID from the jailbird's specific jailbird document in mongo and run `yarn manuallyPost 123456` where "123456" is the ID of the inmate you'd like to see posted.

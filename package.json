@@ -6,7 +6,9 @@
   "scripts": {
     "test": "jest",
     "build": "node_modules/typescript/bin/tsc",
-    "start": "node out/app.js"
+    "start": "node out/app.js",
+    "startManualBatch": "node out/app.js -m",
+    "manuallyPost": "node out/app.js -m -i ${0}"
   },
   "author": "",
   "license": "ISC",
@@ -28,6 +30,7 @@
     "dotenv": "^16.4.4",
     "instagram-private-api": "^1.45.3",
     "lodash": "^4.17.21",
+    "minimist": "^1.2.8",
     "mongoose": "^8.1.2",
     "node-cron": "^3.0.3",
     "puppeteer": "^22.2.0",
