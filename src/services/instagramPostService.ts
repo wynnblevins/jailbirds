@@ -85,8 +85,7 @@ const postBatchToInsta = async () => {
         await postHenricoJB(ig, jailbirdsToPost[i]);
       } else {
         await postRichmondJB(ig, jailbirdsToPost[i]);
-      }
-              
+      }       
     }
 
     finishPosting();

@@ -12,7 +12,7 @@ interface CaptchaRequestBody {
 const CAPTCHA_POST_ERROR_MSG = 'The request to submit the captcha encountered an error';
 const CAPTCHA_API_RESPONSE_FORMAT_ERROR = 'Unable to parse the response from the captcha API';
 
-const submitRichmondCaptcha = async (captchaBody: string) => {
+const submitCaptcha = async (captchaBody: string) => {
   const captchaAPIInEndpoint = 'https://2captcha.com/in.php';
   const requestBody: CaptchaRequestBody = {
     key: CAPCHA_API_KEY,
@@ -28,7 +28,7 @@ const submitRichmondCaptcha = async (captchaBody: string) => {
   }
 };
 
-const getRichmondCaptchaSolution = async (captchaIdStr: string) => {
+const getCaptchaSolution = async (captchaIdStr: string) => {
   const captchaAPIResEndpoint = 'https://2captcha.com/res.php';
   
   if (captchaIdStr.startsWith('OK|')) {
@@ -51,18 +51,27 @@ function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-const solveRichmondCaptcha = async (captchaBody: string) => {
-  
-  const submissionResponse = await submitRichmondCaptcha(captchaBody)
+/**
+ * 
+ * @param captchaBody 
+ * @param delayMs The number of milliseconds to wait for the captcha solution
+ * to be ready.  A higher the delay time means a greater liklihood that the 
+ * captcha solution will be correct.
+ * @returns 
+ */
+const solveCaptcha = async (captchaBody: string, delayMs?: number) => {
+  const submissionResponse = await submitCaptcha(captchaBody)
 
-  return new Promise((resolve, reject) => {
-    delay(20000).then(async () => {
-      const result = await getRichmondCaptchaSolution(submissionResponse.data);  
+  return new Promise(async (resolve, reject) => {
+    delay(delayMs || 20000).then(async () => {
+      const result = await getCaptchaSolution(submissionResponse?.data);  
       resolve(result);
+    }).catch((e: any) => {
+      reject(e);
     });
   });
 };
 
 module.exports = {
-  solveRichmondCaptcha
+  solveCaptcha
 };

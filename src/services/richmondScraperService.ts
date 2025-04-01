@@ -1,34 +1,13 @@
+import { Page } from "puppeteer";
 import { Jailbird } from "../app";
 const { getRandNumInRange } = require('./randomNumberService');
 const puppeteer = require("puppeteer");
-const { solveRichmondCaptcha: solveCaptcha } = require('./capchaService');
 const inmatesPageURL: string = "https://omsweb.secure-gps.com/jtclientweb/jailtracker/index/Richmond_Co_VA";
 const names = require('../data/names');
 const { base64ToImage } = require('./base64ToImgService');
 const fs = require('fs');
-
-const proveHumanity = async (page) => {
-  try {
-    const CAPTCHA_TEXT_FIELD_ID = '#captchaCode';
-    const CAPTCHA_IMG_ID = '#img-captcha';
-
-    // solve the captcha answer
-    await page.waitForSelector(CAPTCHA_IMG_ID);
-    const captchaSrc = await page.$eval(CAPTCHA_IMG_ID, (el) => el.getAttribute('src'));
-    const { data: { request: captchaAnswer } } = await solveCaptcha(captchaSrc);
-  
-    // enter the captch answer on the web page
-    await page.waitForSelector(CAPTCHA_TEXT_FIELD_ID);
-    await page.focus(CAPTCHA_TEXT_FIELD_ID); //you need to focus on the textField
-    await page.type(CAPTCHA_TEXT_FIELD_ID, captchaAnswer);
-
-    // get the validate button and click it
-    let buttons = await page.$$('button.btn');
-    await buttons[1].click();  
-  } catch (e: any) {
-    console.error(`Error encountered while proving humanity`, e);
-  }
-};
+const config = require('../utils/environment');
+const proveHumanity = require('./richmondCaptchaService')
 
 export const buildJailbirds = async (): Promise<Jailbird[]> => {
   console.log('Launching headless browser for Richmond page.');
@@ -69,9 +48,8 @@ const getRandomSubset = (arr, size) => {
 const doJBSearches = async (page): Promise<Jailbird[]> => {
   let webpageJailbirds: Jailbird[] = [];
   
-  // TODO: move these values to .env file
-  const upper = 3;
-  const lower = 3;
+  const upper = +config.richmond.upperSearchCount;
+  const lower = +config.richmond.upperSearchCount;
   const numOfSearches = getRandNumInRange(lower, upper)
   const namesSubset = getRandomSubset(names, numOfSearches);
 
