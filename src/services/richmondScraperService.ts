@@ -150,10 +150,9 @@ const buildJailbird = async (page): Promise<Jailbird> => {
   );
 
   // get jailbird name
-  const viewLessStr: string = 'View Less';
   const tableDataJBLength = 7; // each jb row has a length of 7 table cols
-  const viewLessNdx = tableData.indexOf(viewLessStr);
-  const tableRowData = tableData.slice(viewLessNdx, viewLessNdx + tableDataJBLength)
+  const startNdx = getFirstColNdx(tableData);
+  const tableRowData = tableData.slice(startNdx, startNdx + tableDataJBLength)
   const name: string = buildNameStr(tableRowData);
   const inmateId = getInmateIdStr(tableRowData);
 
@@ -174,7 +173,7 @@ const buildJailbird = async (page): Promise<Jailbird> => {
   const formattedName = `${name.replaceAll(' ', '_')}.gif`;
   const base64Data = picture?.replace(/^data:image\/gif;base64,/, "");
   const imgPath = `out/images/${formattedName}`
-  
+
   try {
     // write the base64 string to a local image for later uploads
     if (base64Data) {
@@ -208,6 +207,29 @@ const buildJailbird = async (page): Promise<Jailbird> => {
   }
 }
 
+/**
+ * There seems to be a timing issue.  This function gets the first 
+ * table column by searching for either "Loading" or "View Less" 
+ * 
+ * @param tableData an array of strings representing the table data 
+ * @returns the first column of the open table row
+ */
+const getFirstColNdx = (tableData: string[]) => {
+  const VIEW_LESS_STR = 'View Less';
+  const LOADING_STR = 'Loading...';
+  const viewLessNdx = tableData.indexOf(VIEW_LESS_STR);
+  const loadingNdx = tableData.indexOf(LOADING_STR);
+
+  if (viewLessNdx === -1 && loadingNdx !== -1) {
+    return loadingNdx;
+  } 
+
+  if (viewLessNdx === -1 && loadingNdx === -1) {
+    throw new Error('Unable to parse table data.');
+  }
+
+  return viewLessNdx;
+};
 
 /**
  * @param page the puppeteer page object
