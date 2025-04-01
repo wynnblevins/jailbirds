@@ -66,7 +66,7 @@ const saveNewJailbirdsToDB = async (newJailbirds: Jailbird[]) => {
   }
 };
 
-const performRoutinePosting = async () => {
+const performBatchPost = async () => {
   pruneDB();
 
   // get the current jailbirds from the webpages
@@ -88,19 +88,30 @@ const performRoutinePosting = async () => {
 };
 
 // check if we are performing the nightly batch or a manual run
-if (argv.manual) {
-  const inmateId = argv.manual;
-  const inmateIdStr = inmateId.toString();
-  postJailbirdById(inmateIdStr).then(() => {
-    console.log('Program complete, stopping execution.');
-  }).catch((e) => {
-    console.error(`Program encountered error while performing manual post: ${e}`)
-  });
-  process.exit();
+if (argv.m) {
+  const inmateId = argv._[2];
+  if (inmateId) {
+    const inmateIdStr = inmateId.toString();
+    postJailbirdById(inmateIdStr).then(() => {
+      console.log('Program complete, stopping execution.');
+      process.exit();
+    }).catch((e) => {
+      console.error(`Program encountered error while performing manual post: ${e}`)
+      process.exit();
+    });
+  } else {
+    performBatchPost().then(() => {
+      console.log('Program complete, stopping execution.');
+      process.exit();
+    }).catch((e) => {
+      console.error(`Program encountered error: ${e}`);
+      process.exit();
+    });
+  }
 } else {
   // if not running in manual mode, start the cron job
   cron.schedule('0 16 * * *', () => {
-    performRoutinePosting().then(() => {
+    performBatchPost().then(() => {
       console.log('Program complete, stopping execution.');
     }).catch((e) => {
       console.error(`Program encountered error: ${e}`);
