@@ -10,7 +10,7 @@ const {
   deleteOldJailbirdsFromFacility,
 } = require("./services/jailbirdService");
 const { buildJailbirds: buildHenricoJailbirds } = require("./services/henricoScraperService");
-const { postToInsta, postJailbirdById } = require('./services/instagramPostService');
+const { postBatchToInsta, postJailbirdById } = require('./services/instagramPostService');
 const { buildJailbirds: buildRichmondJailbirds } = require("./services/richmondScraperService");
 const { filterSavedJailbirds } = require('./services/jailbirdFilterService');
 import { Types } from 'mongoose';
@@ -101,7 +101,7 @@ const performBatchPost = async () => {
   await saveNewJailbirdsToDB(uniqueJailbirds);
 
   // the remaining jailbirds will be what we want to post to instagram, do that here
-  await postToInsta();
+  await postBatchToInsta();
 };
 
 // check if we are performing the nightly batch or a manual run
