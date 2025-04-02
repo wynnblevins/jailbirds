@@ -3,11 +3,22 @@ import { Jailbird } from "../app";
 const { getRandNumInRange } = require('./randomNumberService');
 const puppeteer = require("puppeteer");
 const inmatesPageURL: string = "https://omsweb.secure-gps.com/jtclientweb/jailtracker/index/Richmond_Co_VA";
-const names = require('../data/names');
+const { getSearchNames } = require('../utils/names');
 const { base64ToImage } = require('./base64ToImgService');
 const fs = require('fs');
 const config = require('../utils/environment');
 const proveHumanity = require('./richmondCaptchaService')
+
+const loadPage = async (page) => {
+  try {
+    await page.goto(inmatesPageURL, {
+      waitUntil: 'load',
+      timeout: 10000,
+    });
+  } catch (e: any) {
+    console.error(`Error encountered while loading initial captcha page at ${inmatesPageURL}`);
+  }
+};
 
 export const buildJailbirds = async (): Promise<Jailbird[]> => {
   console.log('Launching headless browser for Richmond page.');
@@ -19,25 +30,22 @@ export const buildJailbirds = async (): Promise<Jailbird[]> => {
   console.log(`Going to ${inmatesPageURL}`);
   const page = await browser.newPage();
 
-  try {
-    await page.goto(inmatesPageURL, {
-      waitUntil: 'load',
-      timeout: 10000,
-    });
-  } catch (e: any) {
-    console.error(`Error encountered while loading initial captcha page at ${inmatesPageURL}`);
-  }
+  await loadPage(page);
 
   // get past the captcha screen
   try {
-    await proveHumanity(page);
+    console.log('Attempting to prove humanity to the Richmond Jail page')
+    return proveHumanity(page).then(async () => {
+      // get a list of jailbirds from the Richmond Jail webpage
+      const webpageJailbirds: Jailbird[] = await doJBSearches(page);
+      browser.close();
+      return webpageJailbirds;
+    }).catch((e: any) => {
+      proveHumanity(page);
+    });
   } catch (e: any) {
     console.error(`Error encounted while proving humanity`, e);
-  }
-  
-  // get a list of jailbirds from the Richmond Jail webpage
-  const webpageJailbirds: Jailbird[] = await doJBSearches(page);
-  return webpageJailbirds;
+  } 
 };
 
 const getRandomSubset = (arr, size) => {
@@ -51,6 +59,7 @@ const doJBSearches = async (page): Promise<Jailbird[]> => {
   const upper = +config.richmond.upperSearchCount;
   const lower = +config.richmond.upperSearchCount;
   const numOfSearches = getRandNumInRange(lower, upper)
+  const names = getSearchNames();
   const namesSubset = getRandomSubset(names, numOfSearches);
 
   for (let i = 0; i < namesSubset.length; i++) {
@@ -73,6 +82,7 @@ const doSearch = async (page, name: string): Promise<Jailbird[]> => {
   await page.focus(FIRST_NAME_SEARCH_BOX_ID);
 
   // type the given name into the first name search box
+  console.log(`Doing a search for the name ${name}`);
   const firstNameSearch = await page.$(FIRST_NAME_SEARCH_BOX_ID);
   await firstNameSearch.click({ clickCount: 3 })
   await firstNameSearch.type(name);
@@ -95,20 +105,26 @@ const doSearch = async (page, name: string): Promise<Jailbird[]> => {
       // expand the jailbird details accordion (by clicking "view more" button)
       await viewMoreBtns[i].click();
       
-      // wait for offender details to be displayed
-      await page.waitForSelector(OFFENDER_DETAILS_ID);
-
-      const jailbird = await buildJailbird(page);
-      if (jailbird) {
-        webpageJailbirds.push(jailbird);
+      try {
+        // wait for offender details to be displayed
+        await page.waitForSelector(OFFENDER_DETAILS_ID);
+      } catch (e: any) {
+        console.error('Timed out waiting for jailbird details to be displayed', e);
+        continue;
       }
 
-      const viewLessBtns = await getButtonsByText(page, "View Less");
-      if (viewLessBtns[0]) {
-        viewLessBtns[0].click();
-        
-        // we're done with this particular jailbird, close the details view
-        await page.waitForSelector(OFFENDER_DETAILS_ID, { hidden: true });
+      try {
+        const jailbird = await buildJailbird(page);  
+        if (jailbird) {
+          webpageJailbirds.push(jailbird);
+        }
+      } catch (e:any) {
+        console.error(`Error encountered while building jailbird`, e);
+      } finally {
+        const viewLessBtns = await getButtonsByText(page, "View Less");
+        if (viewLessBtns[0]) {
+          await viewLessBtns[0].click();
+        }
       }
     }
   }
@@ -117,48 +133,48 @@ const doSearch = async (page, name: string): Promise<Jailbird[]> => {
 };
 
 const buildJailbird = async (page): Promise<Jailbird> => {
+  let jailbird: Jailbird = null;
   const RICHMOND_CITY_JAIL = 'RICHMOND CITY JAIL';
 
   // scrape table data which contains jailbird details
-  await page.waitForSelector('#detailsOfOffender');
   const tableData = await page.$$eval('table tbody tr td', (tds) =>
     tds.map((td) => {
         return td.innerText;
     })
   );
 
-  // get jailbird name
-  const tableDataJBLength = 7; // each jb row has a length of 7 table cols
-  const startNdx = getFirstColNdx(tableData);
-  const tableRowData = tableData.slice(startNdx, startNdx + tableDataJBLength)
-  const name: string = buildNameStr(tableRowData);
-  const inmateId = getInmateIdStr(tableRowData);
+  if (tableData) {
+    // get jailbird name
+    const tableDataJBLength = 7; // each jb row has a length of 7 table cols
+    const startNdx = getFirstColNdx(tableData);
+    const tableRowData = tableData.slice(startNdx, startNdx + tableDataJBLength)
+    const name: string = buildNameStr(tableRowData);
+    const inmateId = getInmateIdStr(tableRowData);
 
-  // build out charge strings for jailbird
-  const chargesArr: string[] = await page.$$('.col-12.table.table-striped.table-hover > h5', (h5s) =>
-    h5s.map((h5) => {
-        return h5.innerText;
-    })
-  );
-  const charges: string = await buildChargesStr(chargesArr);
-  
-  // get jailbird age
-  const age = getAge(tableData);
+    // build out charge strings for jailbird
+    const chargesArr: string[] = await page.$$('.col-12.table.table-striped.table-hover > h5', (h5s) =>
+      h5s.map((h5) => {
+          return h5.innerText;
+      })
+    );
+    const charges: string = await buildChargesStr(chargesArr);
+    
+    // get jailbird age
+    const age = getAge(tableData);
 
-  // get jailbird mugshot
-  const imgs = await page.$$eval('img.img-thumbnail[src]', imgs => imgs.map(img => img.getAttribute('src')));
-  const picture = imgs[0];
-  const formattedName = `${name.replaceAll(' ', '_')}.gif`;
-  const base64Data = picture?.replace(/^data:image\/gif;base64,/, "");
-  const imgPath = `out/images/${formattedName}`
+    // get jailbird mugshot
+    const imgs = await page.$$eval('img.img-thumbnail[src]', imgs => imgs.map(img => img.getAttribute('src')));
+    const picture = imgs[0];
+    const formattedName = `${name.replaceAll(' ', '_')}.gif`;
+    const base64Data = picture?.replace(/^data:image\/gif;base64,/, "");
+    const imgPath = `out/images/${formattedName}`
 
-  try {
     // write the base64 string to a local image for later uploads
     if (base64Data) {
       base64ToImage(base64Data, imgPath);
 
       // construct jailbird from scraped information
-      const jailbird: Jailbird = {
+      jailbird = {
         charges: charges,
         inmateID: inmateId,
         name: name,
@@ -174,15 +190,10 @@ const buildJailbird = async (page): Promise<Jailbird> => {
           '#mugshots',
         ]
       };
-
-      return jailbird;
-    } else {
-      throw new Error(`base64Data for image path ${imgPath} is falsy`);
     }
-  } catch (e: any) {
-    console.error('Error encountered while building jailbird', e);
-    return Promise.resolve(null);
   }
+
+  return jailbird;
 }
 
 /**

@@ -1,7 +1,7 @@
 const axios = require('axios');
 const config = require('../utils/environment');
 const CAPCHA_API_KEY = config.keys.captchaAPIKey;
-
+const { delayMs } = require('./delayService');
 interface CaptchaRequestBody {
   key: string,
   method: 'post' | 'base64',
@@ -30,44 +30,40 @@ const submitCaptcha = async (captchaBody: string) => {
 
 const getCaptchaSolution = async (captchaIdStr: string) => {
   const captchaAPIResEndpoint = 'https://2captcha.com/res.php';
-  
-  if (captchaIdStr.startsWith('OK|')) {
-    const captchaId = captchaIdStr.split('|')[1];
-    const getReqParamsObj = {
-      params: {
-        key: CAPCHA_API_KEY,
-        action: 'get',
-        id: captchaId,
-        json: 1
-      }
-    };
-    return await axios.get(captchaAPIResEndpoint, getReqParamsObj);
-  } else {
-    console.error(CAPTCHA_API_RESPONSE_FORMAT_ERROR);
-  }
+  const captchaId = captchaIdStr.split('|')[1];
+  const getReqParamsObj = {
+    params: {
+      key: CAPCHA_API_KEY,
+      action: 'get',
+      id: captchaId,
+      json: 1
+    }
+  };
+  return await axios.get(captchaAPIResEndpoint, getReqParamsObj);
 };
-
-function delay(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
 
 /**
  * 
  * @param captchaBody 
- * @param delayMs The number of milliseconds to wait for the captcha solution
+ * @param ms The number of milliseconds to wait for the captcha solution
  * to be ready.  A higher the delay time means a greater liklihood that the 
  * captcha solution will be correct.
  * @returns 
  */
-const solveCaptcha = async (captchaBody: string, delayMs?: number) => {
-  const submissionResponse = await submitCaptcha(captchaBody)
-
+const solveCaptcha = async (captchaBody: string, ms?: number) => {
   return new Promise(async (resolve, reject) => {
-    delay(delayMs || 20000).then(async () => {
-      const result = await getCaptchaSolution(submissionResponse?.data);  
-      resolve(result);
-    }).catch((e: any) => {
-      reject(e);
+    submitCaptcha(captchaBody).then((submissionResponse: any) => {
+      if (!submissionResponse?.data || !submissionResponse?.data?.startsWith('OK|')) {
+        console.error(`${CAPTCHA_API_RESPONSE_FORMAT_ERROR}, captcha response was: ${submissionResponse?.data}`);
+        reject(submissionResponse);
+      } else {
+        delayMs(ms || 20000).then(async () => {
+          const result = await getCaptchaSolution(submissionResponse?.data);  
+          resolve(result);
+        }).catch((e: any) => {
+          reject(e);
+        });
+      }
     });
   });
 };
