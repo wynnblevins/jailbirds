@@ -1,6 +1,6 @@
-const fs = require('fs');
+import { writeFileSync } from 'fs';
 
-const base64ToImage = (base64String: string, filePath: string) => {
+const base64ToImage = (base64String: string, filePath: string): void => {
   // Remove the data:image/[type];base64 prefix if it exists
   const base64Data = base64String?.replace(/^data:image\/[a-zA-Z]*;base64,/, '');
 
@@ -9,14 +9,12 @@ const base64ToImage = (base64String: string, filePath: string) => {
     const buffer = Buffer.from(base64Data, 'base64');
 
     // Write the buffer to a file
-    fs.writeFileSync(filePath, buffer);
+    writeFileSync(filePath, buffer);
   } else {
     console.warn('Skipping writing file due to empty base64 string argument');
   }
 }
 
-module.exports = {
+export {
   base64ToImage
 };
-
-export {};

@@ -1,7 +1,7 @@
 require('dotenv').config();
 
 /* eslint no-process-env:0 */
-module.exports = {
+export const config = {
   maxJailbirdsCount: process.env.MAX_JAILBIRDS_COUNT,
   minJailbirdsCount: process.env.MIN_JAILBIRDS_COUNT,
   lowerWaitTimeBoundary: process.env.LOWER_WAIT_TIME_BOUNDARY,
