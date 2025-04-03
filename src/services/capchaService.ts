@@ -2,6 +2,7 @@ const axios = require('axios');
 const config = require('../utils/environment');
 const CAPCHA_API_KEY = config.keys.captchaAPIKey;
 const { delayMs } = require('./delayService');
+
 interface CaptchaRequestBody {
   key: string,
   method: 'post' | 'base64',
@@ -48,7 +49,7 @@ const getCaptchaSolution = async (captchaIdStr: string) => {
  * @param ms The number of milliseconds to wait for the captcha solution
  * to be ready.  A higher the delay time means a greater liklihood that the 
  * captcha solution will be correct.
- * @returns 
+ * @returns A promise for the result of the captcha
  */
 const solveCaptcha = async (captchaBody: string, ms?: number) => {
   return new Promise(async (resolve, reject) => {
