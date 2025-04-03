@@ -21,7 +21,7 @@ const loadPage = async (page) => {
 export const buildJailbirds = async (): Promise<Jailbird[]> => {
   console.log('Launching headless browser for Richmond page.');
   const browser = await puppeteer.launch({ 
-    headless: false,
+    headless: true,
   });
 
   // go to the Henrico inmates page
