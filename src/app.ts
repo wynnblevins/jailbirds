@@ -13,6 +13,7 @@ const { buildJailbirds: buildHenricoJailbirds } = require("./services/henricoScr
 const { postBatchToInsta, postJailbirdById } = require('./services/instagramPostService');
 const { buildJailbirds: buildRichmondJailbirds } = require("./services/richmondScraperService");
 const { filterSavedJailbirds } = require('./services/jailbirdFilterService');
+import { exec } from 'child_process';
 import { Types } from 'mongoose';
 
 interface Jailbird {
@@ -35,9 +36,9 @@ const scrapeWebpages = async (): Promise<Jailbird[]> => {
   const scraperPromises: Promise<any>[] = [];
   
   // scrape the Henrico mugshot web
-  console.log("Scraping Henrico jailbird web page...");
-  const henricoJbs = buildHenricoJailbirds()
-  scraperPromises.push(henricoJbs);
+  // console.log("Scraping Henrico jailbird web page...");
+  // const henricoJbs = buildHenricoJailbirds()
+  // scraperPromises.push(henricoJbs);
 
   console.log("Scraping Richmond jailbird web page...");
   const richmondJbs = buildRichmondJailbirds()
@@ -103,6 +104,8 @@ const performBatchPost = async () => {
   // the remaining jailbirds will be what we want to post to instagram, do that here
   await postBatchToInsta();
 };
+
+
 
 // check if we are performing the nightly batch or a manual run
 if (argv.m) {

@@ -1,11 +1,9 @@
-import { Page } from "puppeteer";
 import { Jailbird } from "../app";
 const { getRandNumInRange } = require('./randomNumberService');
 const puppeteer = require("puppeteer");
 const inmatesPageURL: string = "https://omsweb.secure-gps.com/jtclientweb/jailtracker/index/Richmond_Co_VA";
 const { getSearchNames } = require('../utils/names');
 const { base64ToImage } = require('./base64ToImgService');
-const fs = require('fs');
 const config = require('../utils/environment');
 const proveHumanity = require('./richmondCaptchaService')
 
@@ -167,7 +165,7 @@ const buildJailbird = async (page): Promise<Jailbird> => {
     const picture = imgs[0];
     const formattedName = `${name.replaceAll(' ', '_')}.gif`;
     const base64Data = picture?.replace(/^data:image\/gif;base64,/, "");
-    const imgPath = `out/images/${formattedName}`
+    const imgPath = `./out/images/${formattedName}`
 
     // write the base64 string to a local image for later uploads
     if (base64Data) {
