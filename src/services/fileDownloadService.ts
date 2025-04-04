@@ -1,6 +1,6 @@
 const https = require("https"); // or 'https' for https:// URLs
 const fs = require("fs");
-
+const { logMessage } = require('../services/loggerService');
 const downloadFile = (url: string, ndx: number) => {
   try {
     const stream = fs.createWriteStream(`./mugshots/mugshot${ndx}`);
@@ -11,7 +11,7 @@ const downloadFile = (url: string, ndx: number) => {
       // after download completed close filestream
       stream.on("finish", () => {
         stream.close();
-        console.log("Download Completed");
+        logMessage("Download complete.")
       });
     });
   } catch (e) {

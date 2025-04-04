@@ -1,4 +1,5 @@
 import { Jailbird } from "../app";
+import { JAILS } from "../utils/strings";
 const { getRandNumInRange } = require('./randomNumberService');
 const puppeteer = require("puppeteer");
 const inmatesPageURL: string = "https://omsweb.secure-gps.com/jtclientweb/jailtracker/index/Richmond_Co_VA";
@@ -6,6 +7,7 @@ const { getSearchNames } = require('../utils/names');
 const { base64ToImage } = require('./base64ToImgService');
 const config = require('../utils/environment');
 const proveHumanity = require('./richmondCaptchaService')
+const { logMessage } = require('./loggerService');
 
 const loadPage = async (page) => {
   try {
@@ -19,20 +21,22 @@ const loadPage = async (page) => {
 };
 
 export const buildJailbirds = async (): Promise<Jailbird[]> => {
-  console.log('Launching headless browser for Richmond page.');
+  logMessage('Launching headless browser for Richmond page.', JAILS.RICHMOND_CITY_JAIL)
   const browser = await puppeteer.launch({ 
     headless: true,
   });
 
-  // go to the Henrico inmates page
-  console.log(`Going to ${inmatesPageURL}`);
+  // go to the Richmond inmates page
+  logMessage(`Going to ${inmatesPageURL}`, JAILS.RICHMOND_CITY_JAIL);
   const page = await browser.newPage();
-
   await loadPage(page);
 
   // get past the captcha screen
   try {
-    console.log('Attempting to prove humanity to the Richmond Jail page')
+    logMessage(
+      'Attempting to prove humanity to the Richmond Jail page', 
+      JAILS.RICHMOND_CITY_JAIL
+    );
     return proveHumanity(page).then(async () => {
       // get a list of jailbirds from the Richmond Jail webpage
       const webpageJailbirds: Jailbird[] = await doJBSearches(page);
@@ -80,7 +84,10 @@ const doSearch = async (page, name: string): Promise<Jailbird[]> => {
   await page.focus(FIRST_NAME_SEARCH_BOX_ID);
 
   // type the given name into the first name search box
-  console.log(`Doing a search for the name ${name}`);
+  logMessage(
+    `Doing a search for the name ${name}`, 
+    JAILS.RICHMOND_CITY_JAIL
+  );
   const firstNameSearch = await page.$(FIRST_NAME_SEARCH_BOX_ID);
   await firstNameSearch.click({ clickCount: 3 })
   await firstNameSearch.type(name);

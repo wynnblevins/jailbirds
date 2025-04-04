@@ -9,7 +9,8 @@ const {
   deleteJailbird,
   findJailbirdByInmateId
 } = require('./jailbirdService');
-const { shuffle } = require('./shuffleService')
+const { shuffle } = require('./shuffleService');
+const { logMessage } = require('./loggerService');
 import { readFile } from 'fs';
 import { promisify } from 'util';
 const readFileAsync = promisify(readFile);
@@ -49,7 +50,7 @@ const performLocalPost = async (ig, jailbird: Jailbird) => {
 
 const performUrlPost = async (ig, imageBuffer, jailbird: Jailbird) => {
   try {
-    console.log(`Posting ${jailbird.name} to instagram.`);
+    logMessage(`Posting ${jailbird.name} to instagram.`);
     
     await ig.publish.photo({
       file: imageBuffer,
@@ -69,8 +70,8 @@ const getImageBuffer = async (jailbird: Jailbird): Promise<object | undefined> =
       encoding: null, 
     });
   } catch (e: any) {
-    console.error(e.message);
-    console.error(`Encountered error while getting image buffer.  Deleting problematic jailbird.`);
+    logMessage(e.message);
+    logMessage(`Encountered error while getting image buffer.  Deleting problematic jailbird.`);
     deleteJailbird(jailbird);
   }
 };
@@ -91,7 +92,7 @@ const postJailbirdById = async (inmateId: string) => {
 
 const postBatchToInsta = async () => {
   const BATCH_SIZE = randomIntFromInterval(+config.minJailbirdsCount, +config.maxJailbirdsCount);
-  console.log(`Beginning to post ${BATCH_SIZE} jailbirds to instagram.`)
+  logMessage(`Beginning to post ${BATCH_SIZE} jailbirds to instagram.`);
 
   const unpostedJailbirds: Jailbird[] = await findUnpostedJailbirds();
   const unpostedAndShuffledJBs: Jailbird[] = shuffle(unpostedJailbirds);
@@ -111,7 +112,7 @@ const postBatchToInsta = async () => {
           +config.lowerWaitTimeBoundary, 
           +config.upperWaitTimeBoundary
         );
-        console.log(`Waiting ${randomWaitTime} ms before posting.`);
+        logMessage(`Waiting ${randomWaitTime} ms before posting.`);
         
         await new Promise<void>(done => setTimeout(() => {
           if (isValidHttpUrl(jailbirdsToPost[i].picture)) {

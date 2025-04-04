@@ -6,7 +6,6 @@ describe('getRandNumInRange', () => {
     const lower = 5;
 
     const result = getRandNumInRange(lower, upper);
-    console.log(result);
     
     expect(result).toBeGreaterThanOrEqual(lower);
     expect(result).toBeLessThanOrEqual(upper);
