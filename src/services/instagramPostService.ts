@@ -32,7 +32,9 @@ const isValidHttpUrl = (string: string) => {
 }
 
 const logErrorAndDeleteJB = (jailbird: Jailbird) => {
-  console.error(`Encountered error while posting to instagram. Deleting problematic jailbird.`);
+  logMessage(
+    `Encountered error while posting to instagram. Deleting problematic jailbird with ID ${jailbird.inmateID}.`
+  )
   return deleteJailbird(jailbird._id.toString())
 };
 

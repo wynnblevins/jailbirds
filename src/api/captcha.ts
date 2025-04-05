@@ -22,7 +22,7 @@ const submitCaptcha = async (captchaBody: string) => {
   try {
     return await axios.post(captchaAPIInEndpoint, requestBody);
   } catch (e: any) {
-    console.error(CAPTCHA_POST_ERROR_MSG, e);
+    logMessage(`${CAPTCHA_POST_ERROR_MSG}, ${e}`)
   }
 };
 

@@ -11,7 +11,7 @@ const base64ToImage = (base64String: string, filePath: string): void => {
     // Write the buffer to a file
     writeFileSync(filePath, buffer);
   } else {
-    console.warn('Skipping writing file due to empty base64 string argument');
+    logMessage('Skipping writing file due to empty base64 string argument')
   }
 }
 

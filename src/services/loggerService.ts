@@ -9,7 +9,7 @@ const JAIL_NAME = require('../utils/strings');
  * @param message: the message to log
  * @param jailName 
  */
-const logMessage = (message: string, jailName?: typeof JAIL_NAME) => {
+const logMessage = (message: string, jailName?: string) => {
   if (jailName) {
     console.log(`${jailName}: ${message}`);
   } else {

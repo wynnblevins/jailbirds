@@ -35,14 +35,14 @@ mongoose.connect(mongoURL);
 const scrapeWebpages = async (): Promise<Jailbird[]> => {
   const scraperPromises: Promise<any>[] = [];
   
-  // scrape the Henrico mugshot web
-  console.log("Scraping Henrico jailbird web page...");
-  const henricoJbs = buildHenricoJailbirds()
-  scraperPromises.push(henricoJbs);
-
-  console.log("Scraping Richmond jailbird web page...");
-  const richmondJbs = buildRichmondJailbirds()
+  logMessage(JAILS.RICHMOND_CITY_JAIL, "Scraping Richmond jailbird web page...");
+  const richmondJbs = buildRichmondJailbirds();
   scraperPromises.push(richmondJbs);
+
+  // scrape the Henrico mugshot web
+  logMessage(JAILS.HENRICO_COUNTY_REGIONAL_JAIL, "Scraping Henrico jailbird web page...");
+  const henricoJbs = buildHenricoJailbirds();
+  scraperPromises.push(henricoJbs);
 
   const resolvedData = await Promise.all(scraperPromises);
   return resolvedData.flat(1);
@@ -80,7 +80,7 @@ const saveNewJailbirdsToDB = async (newJailbirds: Jailbird[]) => {
   try {
     await createMultipleJailbirds(newJailbirds);
   } catch (e: any) {
-    console.error("Error encountered while creating jailbird.", e);
+    logMessage(`Error encountered while creating jailbird. ${e}`);
   }
 };
 
@@ -111,18 +111,18 @@ if (argv.m) {
   if (inmateId) {
     const inmateIdStr = inmateId.toString();
     postJailbirdById(inmateIdStr).then(() => {
-      console.log('Program complete, stopping execution.');
+      logMessage("Program complete, stopping execution.")
       process.exit();
     }).catch((e) => {
-      console.error(`Program encountered error while performing manual post: ${e}`)
+      logMessage(`Program encountered error while performing manual post: ${e}`);
       process.exit();
     });
   } else {
     performBatchPost().then(() => {
-      console.log('Program complete, stopping execution.');
+      logMessage('Program complete, stopping execution.');
       process.exit();
     }).catch((e) => {
-      console.error(`Program encountered error: ${e}`);
+      logMessage(`Program encountered error: ${e}`);
       process.exit();
     });
   }
@@ -130,9 +130,9 @@ if (argv.m) {
   // if not running in manual mode, start the cron job
   cron.schedule('0 16 * * *', () => {
     performBatchPost().then(() => {
-      console.log('Program complete, stopping execution.');
+      logMessage('Program complete, stopping execution.');
     }).catch((e) => {
-      console.error(`Program encountered error: ${e}`);
+      logMessage(`Program encountered error: ${e}`);
     });
   });  
 }

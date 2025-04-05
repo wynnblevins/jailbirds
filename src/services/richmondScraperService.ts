@@ -16,7 +16,7 @@ const loadPage = async (page) => {
       timeout: 10000,
     });
   } catch (e: any) {
-    console.error(`Error encountered while loading initial captcha page at ${inmatesPageURL}`);
+    logMessage(`Error encountered while loading initial captcha page at ${inmatesPageURL}`);
   }
 };
 
@@ -46,7 +46,7 @@ export const buildJailbirds = async (): Promise<Jailbird[]> => {
       proveHumanity(page);
     });
   } catch (e: any) {
-    console.error(`Error encounted while proving humanity`, e);
+    logMessage(`Error encounted while proving humanity, ${e}`);
   } 
 };
 
@@ -114,7 +114,7 @@ const doSearch = async (page, name: string): Promise<Jailbird[]> => {
         // wait for offender details to be displayed
         await page.waitForSelector(OFFENDER_DETAILS_ID);
       } catch (e: any) {
-        console.error('Timed out waiting for jailbird details to be displayed', e);
+        logMessage(`Timed out waiting for jailbird details to be displayed, ${e}`);
         continue;
       }
 
@@ -124,7 +124,7 @@ const doSearch = async (page, name: string): Promise<Jailbird[]> => {
           webpageJailbirds.push(jailbird);
         }
       } catch (e:any) {
-        console.error(`Error encountered while building jailbird`, e);
+        logMessage(`Error encountered while building jailbird, ${e}`);
       } finally {
         const viewLessBtns = await getButtonsByText(page, "View Less");
         if (viewLessBtns[0]) {

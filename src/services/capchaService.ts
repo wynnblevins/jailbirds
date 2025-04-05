@@ -15,7 +15,7 @@ const solveCaptcha = async (captchaBody: string, ms?: number) => {
   return new Promise(async (resolve, reject) => {
     submitCaptcha(captchaBody).then((submissionResponse: any) => {
       if (!submissionResponse?.data || !submissionResponse?.data?.startsWith('OK|')) {
-        console.error(`${CAPTCHA_API_RESPONSE_FORMAT_ERROR}, captcha response was: ${submissionResponse?.data}`);
+        logMessage(`${CAPTCHA_API_RESPONSE_FORMAT_ERROR}, captcha response was: ${submissionResponse?.data}`)
         reject(submissionResponse);
       } else {
         delayMs(ms || 20000).then(async () => {
