@@ -6,6 +6,10 @@ module.exports = {
   minJailbirdsCount: process.env.MIN_JAILBIRDS_COUNT,
   lowerWaitTimeBoundary: process.env.LOWER_WAIT_TIME_BOUNDARY,
   upperWaitTimeBoundary: process.env.UPPER_WAIT_TIME_BOUNDARY,
+  richmond: {
+    lowerSearchCount: process.env.MIN_RICHMOND_JB_SEARCHES,
+    upperSearchCount: process.env.MAX_RICHMOND_JB_SEARCHES
+  },
   ig: {
     username: process.env.IG_USERNAME,
     password: process.env.IG_PASSWORD
@@ -15,5 +19,8 @@ module.exports = {
     host: process.env.DATABASE_HOST,
     username: process.env.MONGO_USERNAME,
     password: process.env.MONGO_PASSWORD
+  },
+  keys: {
+    captchaAPIKey: process.env.CAPTCHA_KEY
   }
 }

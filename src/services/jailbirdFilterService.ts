@@ -19,13 +19,24 @@ function containsJailbird(obj: Jailbird, list: Jailbird[]) {
   return false;
 }
 
+/**
+ * Given a list of jailbirds from the webpage, this will 
+ * filter the jailbirds that are already in the database
+ * 
+ * @param dbJailbirds the jailbirds from the database
+ * @param webpageJailbird the jailbirds from the webpage 
+ * @returns a filtered list of jailbirds
+ */
 const filterSavedJailbirds = (
-  allDbJailbirds: Jailbird[], 
+  dbJailbirds: Jailbird[], 
   webpageJailbirds: Jailbird[]
 ) => {
-  return webpageJailbirds.filter((webpageJailbird: Jailbird) => {
-    return !containsJailbird(webpageJailbird, allDbJailbirds)
+  const result = webpageJailbirds.filter((webpageJailbird: Jailbird) => {
+    const filter = !containsJailbird(webpageJailbird, dbJailbirds)
+    return filter;
   })
+
+  return result;
 };
 
 /**

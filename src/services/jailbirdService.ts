@@ -2,8 +2,10 @@ import { Jailbird as IJailbird } from "../app";
 
 const Jailbird = require("../models/Jailbird");
 
-const findAllJailbirds = async () => {
-  return await Jailbird.find();
+const findAllJailbirds = async (): Promise<IJailbird> => {
+  const result = await Jailbird.find();
+  const jbs = result.map((jb) => jb.toObject() as IJailbird)
+  return jbs;
 };
 
 const findJailbirdById = async (id: string) => {
