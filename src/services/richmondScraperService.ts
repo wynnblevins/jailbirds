@@ -170,20 +170,15 @@ const buildJailbird = async (page): Promise<Jailbird> => {
     // get jailbird mugshot
     const imgs = await page.$$eval('img.img-thumbnail[src]', imgs => imgs.map(img => img.getAttribute('src')));
     const picture = imgs[0];
-    const formattedName = `${name.replaceAll(' ', '_')}.gif`;
-    const base64Data = picture?.replace(/^data:image\/gif;base64,/, "");
-    const imgPath = `./out/images/${formattedName}`
 
     // write the base64 string to a local image for later uploads
-    if (base64Data) {
-      base64ToImage(base64Data, imgPath);
-
+    if (picture) {
       // construct jailbird from scraped information
       jailbird = {
         charges: charges,
         inmateID: inmateId,
         name: name,
-        picture: imgPath,
+        picture: picture,
         facility: RICHMOND_CITY_JAIL,
         age: age,
         timestamp: new Date(),

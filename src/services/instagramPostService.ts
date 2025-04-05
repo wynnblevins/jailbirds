@@ -13,6 +13,8 @@ const { shuffle } = require('./shuffleService');
 const { logMessage } = require('./loggerService');
 import { readFile } from 'fs';
 import { promisify } from 'util';
+import { base64ToImage } from "./base64ToImgService";
+import { resolve } from "path";
 const readFileAsync = promisify(readFile);
 
 const randomIntFromInterval = (min: number, max: number) => {  
@@ -38,16 +40,45 @@ const logErrorAndDeleteJB = (jailbird: Jailbird) => {
   return deleteJailbird(jailbird._id.toString())
 };
 
+/**
+ * Given a jailbird with a base64 image in the picture field, this function will create
+ * a local copy of the image then upload the jailbird's image and data to instagram. 
+ * Finally, after completing that, this function will delete the local image and return
+ * a promise for updating the jailbird's isPosted flag.
+ * 
+ * @param ig 
+ * @param jailbird the jailbird to post
+ * @returns 
+ */
 const performLocalPost = async (ig, jailbird: Jailbird) => {
-  try {
-    await ig.publish.photo({
-      file: await readFileAsync(jailbird.picture),
-      caption: `\n\n${jailbird.name}, ${jailbird.age}: \n\n${jailbird.facility} \n\n${jailbird.charges} \n\n${jailbird.hashtags.join(', ')}`,
-    });
-    return await updateJailbird(jailbird.inmateID, { isPosted: true });
-  } catch (e: any) {
-    logErrorAndDeleteJB(jailbird);
-  }
+  const localPostPromise = new Promise(async (resolve, reject) => {
+    try {
+      const formattedName = jailbird.name.replace(' ', '_');
+      const imgPath = `./out/images/${formattedName}`;
+      await base64ToImage(jailbird?.picture, imgPath);
+
+      await ig.publish.photo({
+        file: await readFileAsync(imgPath),
+        caption: `\n\n${jailbird.name}, ${jailbird.age}: \n\n${jailbird.facility} \n\n${jailbird.charges} \n\n${jailbird.hashtags.join(', ')}`,
+      });
+      
+      fs.unlink(imgPath, (err) => {
+        if (err) {
+          logMessage(`An error occurred ${err}`)
+          return;
+        }
+        logMessage(`${imgPath} deleted successfully`);
+      });
+      
+      const result = await updateJailbird(jailbird.inmateID, { isPosted: true });
+      resolve(result);
+    } catch (e: any) {
+      logErrorAndDeleteJB(jailbird);
+      reject(e);
+    }
+  });
+
+  return localPostPromise;
 }
 
 const performUrlPost = async (ig, imageBuffer, jailbird: Jailbird) => {
@@ -106,28 +137,26 @@ const postBatchToInsta = async () => {
     await ig.account.login(config.ig.username, config.ig.password);
 
     for (let i = 0; i < jailbirdsToPost.length; i++) {
-      const imageBuffer = await getImageBuffer(jailbirdsToPost[i]);
-    
-      if (imageBuffer) {
-        // wait 30 minutes to an hour between posts
-        const randomWaitTime = randomIntFromInterval(
-          +config.lowerWaitTimeBoundary, 
-          +config.upperWaitTimeBoundary
-        );
-        logMessage(`Waiting ${randomWaitTime} ms before posting.`);
-        
-        await new Promise<void>(done => setTimeout(() => {
-          if (isValidHttpUrl(jailbirdsToPost[i].picture)) {
-            performUrlPost(ig, imageBuffer, jailbirdsToPost[i]).then(() => {
-              done();
-            });
-          } else {
-            performLocalPost(ig, jailbirdsToPost[i]).then(() => {
-              done();
-            });
-          }
-        }, randomWaitTime));
-      }        
+      // wait 30 minutes to an hour between posts
+      const randomWaitTime = randomIntFromInterval(
+        +config.lowerWaitTimeBoundary, 
+        +config.upperWaitTimeBoundary
+      );
+      logMessage(`Waiting ${randomWaitTime} ms before posting.`);
+      
+      await new Promise<void>(done => setTimeout(async () => {
+        if (isValidHttpUrl(jailbirdsToPost[i].picture)) {
+          const imageBuffer = await getImageBuffer(jailbirdsToPost[i]); 
+          performUrlPost(ig, imageBuffer, jailbirdsToPost[i]).then(() => {
+            done();
+          });
+        } else {
+          performLocalPost(ig, jailbirdsToPost[i]).then(() => {
+            done();
+          });
+        }
+      }, randomWaitTime));
+            
     }
 
     finishPosting();
