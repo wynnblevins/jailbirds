@@ -1,5 +1,6 @@
 import { getCaptchaSolution, submitCaptcha } from "../api/captcha";
 import { delayMs } from "./delayService";
+import { logMessage } from "./loggerService";
 
 const CAPTCHA_API_RESPONSE_FORMAT_ERROR = 'Unable to parse the response from the captcha API';
 
