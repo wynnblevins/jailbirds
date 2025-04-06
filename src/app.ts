@@ -38,12 +38,12 @@ mongoose.connect(mongoURL);
 const scrapeWebpages = async (): Promise<Jailbird[]> => {
   const scraperPromises: Promise<any>[] = [];
   
-  logMessage(JAILS.RICHMOND_CITY_JAIL, "Scraping Richmond jailbird web page...");
+  logMessage("Scraping Richmond jailbird web page...", JAILS.RICHMOND_CITY_JAIL);
   const richmondJbs = buildRichmondJailbirds();
   scraperPromises.push(richmondJbs);
 
   // scrape the Henrico mugshot web
-  logMessage(JAILS.HENRICO_COUNTY_REGIONAL_JAIL, "Scraping Henrico jailbird web page...");
+  logMessage("Scraping Henrico jailbird web page...", JAILS.HENRICO_COUNTY_REGIONAL_JAIL);
   const henricoJbs = buildHenricoJailbirds();
   scraperPromises.push(henricoJbs);
 
