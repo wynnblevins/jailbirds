@@ -12,8 +12,11 @@ const {
 const { buildJailbirds: buildHenricoJailbirds } = require("./services/henricoScraperService");
 const { postBatchToInsta, postJailbirdById } = require('./services/instagramPostService');
 const { buildJailbirds: buildRichmondJailbirds } = require("./services/richmondScraperService");
-const { filterSavedJailbirds } = require('./services/jailbirdFilterService');
-import { exec } from 'child_process';
+const { 
+  filterSavedJailbirds, 
+  filterBoringJailbirds 
+} = require('./services/jailbirdFilterService');
+const { logMessage } = require('./services/loggerService');
 import { Types } from 'mongoose';
 
 interface Jailbird {
@@ -84,24 +87,37 @@ const saveNewJailbirdsToDB = async (newJailbirds: Jailbird[]) => {
   }
 };
 
-const performBatchPost = async () => {
-  pruneDB();
-
+const getJailbirdsToPost = async () => {
   // get the current jailbirds from the webpages
   const webpageJailbirds = await scrapeWebpages();
 
   // get a list of all known jailbirds (posted or unposted) from the DB
   const allDbJailbirds = await findAllJailbirds();
 
-  // filter the webpage jailbirds we know about already
-  const unsavedJailbirds = filterSavedJailbirds(allDbJailbirds, webpageJailbirds);
-
+  // filter the webpage jailbirds we know about already...
+  let unsaveJailbirds = filterSavedJailbirds(allDbJailbirds, webpageJailbirds);
+  
+  // ...and filter the boring jailbirds
+  const CONTEMPT_OF_COURT = "OTHER OFFENSES-CONTEMPT OF COURT";
+  const PROBATION_VIOLATION = "OTHER OFFENSES-PROBATION VIOLATION";
+  const noContemptJbs = filterBoringJailbirds(unsaveJailbirds, CONTEMPT_OF_COURT);
+  const filteredJbs = filterBoringJailbirds(noContemptJbs, PROBATION_VIOLATION);
+  
   // there will likely be duplicates in the combined array, remove the dupes
-  const uniqueJailbirds = _.uniqBy(unsavedJailbirds, "inmateID");
+  const jailbirds = _.uniqBy(filteredJbs, "inmateID");
 
-  await saveNewJailbirdsToDB(uniqueJailbirds);
+  return jailbirds;
+};
 
-  // the remaining jailbirds will be what we want to post to instagram, do that here
+const performBatchPost = async () => {
+  // to keep from running out of database space, get rid of old jailbirds
+  pruneDB();
+
+  // get the refined/filtered list of jailbirds and save to the db
+  const jailbirds = await getJailbirdsToPost();
+  await saveNewJailbirdsToDB(jailbirds);
+
+  // remaining jbs will be what we want to post to instagram, do that here
   await postBatchToInsta();
 };
 
