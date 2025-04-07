@@ -35,7 +35,7 @@ const isValidHttpUrl = (string: string) => {
 
 const logErrorAndDeleteJB = (jailbird: Jailbird) => {
   logMessage(
-    `Encountered error while posting to instagram. Deleting problematic jailbird with ID ${jailbird.inmateID}.`
+    `Encountered error while posting to instagram. Deleting problematic jailbird with ID ${jailbird?.inmateID}.`
   )
   return deleteJailbird(jailbird._id.toString())
 };
@@ -70,7 +70,7 @@ const performLocalPost = async (ig, jailbird: Jailbird) => {
         logMessage(`${imgPath} deleted successfully`);
       });
       
-      const result = await updateJailbird(jailbird.inmateID, { isPosted: true });
+      const result = await updateJailbird(jailbird?.inmateID, { isPosted: true });
       resolve(result);
     } catch (e: any) {
       logErrorAndDeleteJB(jailbird);
@@ -90,7 +90,7 @@ const performUrlPost = async (ig, imageBuffer, jailbird: Jailbird) => {
       caption: `\n\n${jailbird.name}, ${jailbird.age}: \n\n${jailbird.facility} \n\n${jailbird.charges} \n\n${jailbird.hashtags.join(', ')}`
     });
 
-    return await updateJailbird(jailbird.inmateID, { isPosted: true });
+    return await updateJailbird(jailbird?.inmateID, { isPosted: true });
   } catch (e: any) {
     logErrorAndDeleteJB(jailbird);
   }

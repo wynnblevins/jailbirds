@@ -11,7 +11,7 @@ const asyncFilter = async (arr, predicate) => {
 function containsJailbird(obj: Jailbird, list: Jailbird[]) {
   var i;
   for (i = 0; i < list.length; i++) {
-      if (list[i].inmateID === obj.inmateID) {
+      if (list[i]?.inmateID === obj?.inmateID) {
           return true;
       }
   }
@@ -48,7 +48,7 @@ const filterSavedJailbirds = (
 const filterPostedJailbirds = async (jailbirds: Jailbird[]) => {
   const asyncResult = await asyncFilter(jailbirds, 
     async (jailbird: Jailbird) => {
-      const result: Jailbird = await findJailbirdByInmateId(jailbird.inmateID);
+      const result: Jailbird = await findJailbirdByInmateId(jailbird?.inmateID);
       return !result[0]?.isPosted;
     }
   );  

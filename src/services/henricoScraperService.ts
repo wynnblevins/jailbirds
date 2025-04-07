@@ -40,7 +40,7 @@ const mergeJailbirdsIntoUnique = (nonUniqueJailbirds: Jailbird[]): Jailbird[] =>
   
   nonUniqueJailbirds.forEach(nonUniqueJailbird => {
     const existingJailbird = uniqueJailbirds.find((jailbird: Jailbird) => { 
-      return jailbird.inmateID === nonUniqueJailbird.inmateID
+      return jailbird?.inmateID === nonUniqueJailbird?.inmateID
     }); 
 
     if (existingJailbird) {
