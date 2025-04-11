@@ -1,8 +1,7 @@
 import { Jailbird as IJailbird } from "../app";
+import { Jailbird } from "../models/Jailbird";  
 
-const Jailbird = require("../models/Jailbird");
-
-const findAllJailbirds = async (): Promise<IJailbird> => {
+const findAllJailbirds = async (): Promise<IJailbird[]> => {
   const result = await Jailbird.find();
   const jbs = result.map((jb) => jb.toObject() as IJailbird)
   return jbs;
@@ -73,7 +72,7 @@ const updateJailbird = async (inmateID: string, update: object) => {
   return await Jailbird.findOneAndUpdate({ inmateID: inmateID }, update);
 };
 
-export = {
+export {
   findJailbirdByInmateId,
   findAllJailbirds,
   findJailbirdById,

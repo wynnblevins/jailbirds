@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const jailbirdSchema = new mongoose.Schema(
   {
@@ -16,4 +16,6 @@ const jailbirdSchema = new mongoose.Schema(
   { typeKey: "$type" }
 );
 
-module.exports = mongoose.model("Jailbird", jailbirdSchema);
+const Jailbird = mongoose.model("Jailbird", jailbirdSchema)
+
+export { Jailbird };
