@@ -1,6 +1,13 @@
+import mockingoose from 'mockingoose';
 import { Jailbird } from "../app";
 import { faker } from '@faker-js/faker';
 import { JAILS, MIDLOTHIAN_CHARGES, RICHMOND_CHARGES } from "../utils/strings";
+
+const DUMMY_INMATE_ID_0 = "000000";
+const DUMMY_INMATE_ID_1 = "000001";
+const DUMMY_INMATE_ID_2 = "000002";
+const DUMMY_INMATE_ID_3 = "000003";
+const DUMMY_INMATE_ID_4 = "000004";
 
 const POSSIBLE_MIDLOTHIAN_CHARGES = [
   MIDLOTHIAN_CHARGES.LARCENY_PETIT_SHOPLIFTING,
@@ -64,5 +71,10 @@ const createDummyJailbird = (jailbird?: Partial<Jailbird>): Jailbird => {
 };
 
 export {
-  createDummyJailbird
+  DUMMY_INMATE_ID_0,
+  DUMMY_INMATE_ID_1,
+  DUMMY_INMATE_ID_2,
+  DUMMY_INMATE_ID_3,
+  DUMMY_INMATE_ID_4,
+  createDummyJailbird,
 }
