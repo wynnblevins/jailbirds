@@ -2,6 +2,7 @@ import mockingoose from 'mockingoose';
 import { Jailbird } from "../app";
 import { faker } from '@faker-js/faker';
 import { JAILS, MIDLOTHIAN_CHARGES, RICHMOND_CHARGES } from "../utils/strings";
+import mongoose from 'mongoose';
 
 const DUMMY_INMATE_ID_0 = "000000";
 const DUMMY_INMATE_ID_1 = "000001";
@@ -70,6 +71,15 @@ const createDummyJailbird = (jailbird?: Partial<Jailbird>): Jailbird => {
   }
 };
 
+const createDummyJailbirdWithId = (jailbird?: Partial<Jailbird>, _id?: mongoose.Types.ObjectId) => {
+  const createdJailbird = createDummyJailbird(jailbird);
+  const jbWithId = { 
+    ...createdJailbird, 
+    _id: _id || new mongoose.Types.ObjectId() 
+  };
+  return jbWithId;
+};
+
 export {
   DUMMY_INMATE_ID_0,
   DUMMY_INMATE_ID_1,
@@ -77,4 +87,5 @@ export {
   DUMMY_INMATE_ID_3,
   DUMMY_INMATE_ID_4,
   createDummyJailbird,
+  createDummyJailbirdWithId,
 }

@@ -11,7 +11,7 @@ const findJailbirdById = async (id: string) => {
   return await Jailbird.find({ _id: id });
 };
 
-const findJailbirdByInmateId = async (inmateID: string) => {
+const findJailbirdByInmateId = async (inmateID: string): Promise<IJailbird> => {
   return await Jailbird.findOne({ inmateID: inmateID });
 }
 
