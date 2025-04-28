@@ -93,8 +93,16 @@ export const buildJailbirds = async (): Promise<Jailbird[]> => {
   await page.waitForSelector('div.modalBody', {hidden: true});
 
   // tell page to load up 100 results
-  const rowsSelect = await page.waitForSelector("select[name='ctl00_SearchContent_gvData_length']");
-  await rowsSelect.select("100");
+  try {
+    const rowsSelect = await page.waitForSelector("select[name='ctl00_SearchContent_gvData_length']");
+    await rowsSelect.select("100");
+  } catch (e: any) {
+    logMessage(
+      `Encountered error while selecting rows.  Restarting buildJailbirds function.`, 
+      JAILS.HENRICO_COUNTY_REGIONAL_JAIL
+    );
+    buildJailbirds();
+  }
 
   // Get all the inmate name span elements using page.$$
   logMessage(
