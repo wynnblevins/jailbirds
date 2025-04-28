@@ -11,7 +11,7 @@ const removeNumbersFromCharge = (charges: string) => {
 
 const capitalizeStrings = (jailbirds: Jailbird[]): Jailbird[] => {
   let capitalizedJailbirds: Jailbird[] = jailbirds.map((jailbird: Jailbird) => {
-    jailbird.charges = jailbird.charges.toUpperCase();
+    jailbird.charges = jailbird?.charges.toUpperCase();
     jailbird.name = jailbird.name.toUpperCase();
     return jailbird;
   });

@@ -59,7 +59,7 @@ const filterPostedJailbirds = async (jailbirds: Jailbird[]) => {
 };
 
 const chargesAreAll = (chargeToOmit: string, jailbird: Jailbird) => {
-  const charges = jailbird.charges.split(',');
+  const charges = jailbird?.charges.split(',');
 
   for (let i = 0; i < charges.length; i++) {
     if (charges[i].trim() !== chargeToOmit) {
