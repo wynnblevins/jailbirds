@@ -14,7 +14,7 @@ const { logMessage } = require('./loggerService');
 import { readFile } from 'fs';
 import { promisify } from 'util';
 import { base64ToImage } from "./base64ToImgService";
-import { resolve } from "path";
+
 const readFileAsync = promisify(readFile);
 
 const randomIntFromInterval = (min: number, max: number) => {  

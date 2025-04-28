@@ -2,6 +2,7 @@ import axios from 'axios';
 const config = require('../utils/environment')
 const CAPCHA_API_KEY = config.keys.captchaAPIKey;
 const CAPTCHA_POST_ERROR_MSG = 'The request to submit the captcha encountered an error';
+const { logMessage } = require('../services/loggerService');
 
 export interface CaptchaRequestBody {
   key: string,

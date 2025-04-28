@@ -4,7 +4,6 @@ const { getRandNumInRange } = require('./randomNumberService');
 const puppeteer = require("puppeteer");
 const inmatesPageURL: string = "https://omsweb.secure-gps.com/jtclientweb/jailtracker/index/Richmond_Co_VA";
 const { getSearchNames } = require('../utils/names');
-const { base64ToImage } = require('./base64ToImgService');
 const config = require('../utils/environment');
 const proveHumanity = require('./richmondCaptchaService')
 const { logMessage } = require('./loggerService');

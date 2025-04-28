@@ -1,6 +1,7 @@
 const https = require("https"); // or 'https' for https:// URLs
 const fs = require("fs");
 const { logMessage } = require('../services/loggerService');
+
 const downloadFile = (url: string, ndx: number) => {
   try {
     const stream = fs.createWriteStream(`./mugshots/mugshot${ndx}`);
