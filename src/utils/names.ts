@@ -117,6 +117,17 @@ const boyNames: string[] = [
   'Bradley',
   'Russell',
   'Lucas',
+  'Carter',
+  'Demetrius',
+  'Isaac',
+  'Jamar',
+  'Jayden',
+  'Marquel',
+  'Marcus',
+  'Trevon',
+  'Maurice',
+  'Jalen',
+  'Darryl'
 ];
 
 const girlNames = [
