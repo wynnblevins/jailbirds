@@ -1,5 +1,5 @@
-import { Jailbird } from "../app";
-import { JAILS } from "../utils/strings";
+import { Jailbird } from "../../app";
+import { JAILS } from "../../utils/strings";
 const puppeteer = require("puppeteer");
 const { logMessage } = require('../services/loggerService');
 

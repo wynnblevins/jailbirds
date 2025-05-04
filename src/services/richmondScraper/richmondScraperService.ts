@@ -1,5 +1,6 @@
-import { Jailbird } from "../app";
-import { JAILS } from "../utils/strings";
+import { Jailbird } from "../../app";
+import { JAILS } from "../../utils/strings";
+import scrapeTable from "./richmondTableScraperService";
 const { getRandNumInRange } = require('./randomNumberService');
 const puppeteer = require("puppeteer");
 const inmatesPageURL: string = "https://omsweb.secure-gps.com/jtclientweb/jailtracker/index/Richmond_Co_VA";
@@ -141,17 +142,12 @@ const buildJailbird = async (page): Promise<Jailbird> => {
   const RICHMOND_CITY_JAIL = 'RICHMOND CITY JAIL';
 
   // scrape table data which contains jailbird details
-  const tableData = await page.$$eval('table tbody tr td', (tds) =>
-    tds.map((td) => {
-        return td.innerText;
-    })
-  );
+  const tableData = await scrapeTable(page);
 
   if (tableData) {
-    // get jailbird name
-    const tableDataJBLength = 7; // each jb row has a length of 7 table cols
+    const TABLE_DATA_JB_LENGTH = 7; // each jb row has a length of 7 table cols
     const startNdx = getFirstColNdx(tableData);
-    const tableRowData = tableData.slice(startNdx, startNdx + tableDataJBLength)
+    const tableRowData = tableData.slice(startNdx, startNdx + TABLE_DATA_JB_LENGTH)
     const name: string = buildNameStr(tableRowData);
     const inmateId = getInmateIdStr(tableRowData);
 
