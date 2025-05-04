@@ -5,6 +5,8 @@ const { logMessage } = require('../services/loggerService');
 
 const inmatesPageURL: string = "https://ppd.henrico.us/searcharrest.aspx";
 
+const TEN_SECONDS = 10000;
+
 const removeNumbersFromCharge = (charges: string) => {
   return charges.replace(/\d{1,4} - /i, "");
 };
@@ -72,7 +74,7 @@ export const buildJailbirds = async (): Promise<Jailbird[]> => {
   try {
     await page.goto(inmatesPageURL, {
       waitUntil: 'load',
-      timeout: 10000,
+      timeout: TEN_SECONDS,
     });
   } catch (e: any) {
     logMessage(
@@ -161,9 +163,5 @@ export const buildJailbirds = async (): Promise<Jailbird[]> => {
   logMessage('Closing browser session', JAILS.HENRICO_COUNTY_REGIONAL_JAIL);
   await browser.close();
 
-  logMessage(
-    `Returning ${jailbirds.length} jailbirds from henrico scraper service.`, 
-    JAILS.HENRICO_COUNTY_REGIONAL_JAIL
-  );
   return jailbirds;
 };
