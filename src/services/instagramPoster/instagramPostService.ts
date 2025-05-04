@@ -1,4 +1,4 @@
-import { Jailbird } from "../app";
+import { Jailbird } from "../../app";
 const { IgApiClient } = require('instagram-private-api');
 const fs = require('fs');
 const { get } = require('request-promise');

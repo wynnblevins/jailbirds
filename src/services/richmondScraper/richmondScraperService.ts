@@ -1,5 +1,6 @@
 import { Jailbird } from "../../app";
 import { JAILS } from "../../utils/strings";
+import launchBrowser from "../browserLauncherService";
 import scrapeTable from "./richmondTableScraperService";
 const { getRandNumInRange } = require('./randomNumberService');
 const puppeteer = require("puppeteer");
@@ -22,9 +23,7 @@ const loadPage = async (page) => {
 
 export const buildJailbirds = async (): Promise<Jailbird[]> => {
   logMessage('Launching headless browser for Richmond page.', JAILS.RICHMOND_CITY_JAIL)
-  const browser = await puppeteer.launch({ 
-    headless: true,
-  });
+  const browser = await launchBrowser();
 
   // go to the Richmond inmates page
   logMessage(`Going to ${inmatesPageURL}`, JAILS.RICHMOND_CITY_JAIL);

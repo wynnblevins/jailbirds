@@ -1,5 +1,6 @@
 import { Jailbird } from "../../app";
 import { JAILS } from "../../utils/strings";
+import launchBrowser from "../browserLauncherService";
 const puppeteer = require("puppeteer");
 const { logMessage } = require('../services/loggerService');
 
@@ -60,9 +61,7 @@ export const buildJailbirds = async (): Promise<Jailbird[]> => {
 
   // open up a headless chrome
   logMessage('Launching headless browser for Henrico page.', JAILS.HENRICO_COUNTY_REGIONAL_JAIL);
-  const browser = await puppeteer.launch({ 
-    headless: true,
-  });
+  const browser = await launchBrowser();
 
   // go to the Henrico inmates page
   logMessage(
