@@ -9,9 +9,9 @@ const {
   findAllJailbirds,
   deleteOldJailbirdsFromFacility,
 } = require("./services/jailbirdService");
-const { buildJailbirds: buildHenricoJailbirds } = require("./services/henricoScraperService");
-const { postBatchToInsta, postJailbirdById } = require('./services/instagramPostService');
-const { buildJailbirds: buildRichmondJailbirds } = require("./services/richmondScraperService");
+import { buildJailbirds as buildHenricoJailbirds } from './services/henricoScraper/henricoScraperService';
+import { buildJailbirds as buildRichmondJailbirds } from './services/richmondScraper/richmondScraperService';
+const { postBatchToInsta, postJailbirdById } = require('./services/instagramPoster/instagramPostService');
 const { 
   filterSavedJailbirds, 
   filterBoringJailbirds 

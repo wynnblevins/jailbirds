@@ -1,6 +1,6 @@
 import { Page } from "puppeteer";
-const { solveCaptcha } = require('./capchaService');
-const { delayMs } = require('./delayService');
+const { solveCaptcha } = require('../capchaService');
+const { delayMs } = require('../delayService');
 
 const attemptCaptcha = async (captchaSrc): Promise<string> => {
   const TWENTY_SECOND_TIMEOUT = 20000;

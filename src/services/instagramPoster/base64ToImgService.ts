@@ -1,5 +1,5 @@
 import { writeFileSync } from 'fs';
-const { logMessage } = require('../services/loggerService');
+const { logMessage } = require('../../services/loggerService');
 
 const base64ToImage = (base64String: string, filePath: string): void => {
   // Remove the data:image/[type];base64 prefix if it exists

@@ -2,13 +2,13 @@ import { Jailbird } from "../../app";
 import { JAILS } from "../../utils/strings";
 import launchBrowser from "../browserLauncherService";
 import scrapeTable from "./richmondTableScraperService";
-const { getRandNumInRange } = require('./randomNumberService');
-const puppeteer = require("puppeteer");
-const inmatesPageURL: string = "https://omsweb.secure-gps.com/jtclientweb/jailtracker/index/Richmond_Co_VA";
-const { getSearchNames } = require('../utils/names');
-const config = require('../utils/environment');
+const { getRandNumInRange } = require('../randomNumberService');
+const { getFirstNames, getLastNames } = require('../../utils/names');
+const config = require('../../utils/environment');
 const proveHumanity = require('./richmondCaptchaService')
-const { logMessage } = require('./loggerService');
+const { logMessage } = require('../loggerService');
+
+const inmatesPageURL: string = "https://omsweb.secure-gps.com/jtclientweb/jailtracker/index/Richmond_Co_VA";
 
 const loadPage = async (page) => {
   try {
@@ -60,11 +60,30 @@ const doJBSearches = async (page): Promise<Jailbird[]> => {
   const upper = +config.richmond.upperSearchCount;
   const lower = +config.richmond.upperSearchCount;
   const numOfSearches = getRandNumInRange(lower, upper)
-  const names = getSearchNames();
-  const namesSubset = getRandomSubset(names, numOfSearches);
+  
+  const firstNames = getFirstNames();
+  const firstNamesSubset = getRandomSubset(firstNames, numOfSearches);
 
-  for (let i = 0; i < namesSubset.length; i++) {
-    const jailbirds: Jailbird[] = await doSearch(page, namesSubset[i]);
+  logMessage(
+    `Performing ${firstNamesSubset.length} first name searches`, 
+    JAILS.RICHMOND_CITY_JAIL
+  );
+  for (let i = 0; i < firstNamesSubset.length; i++) {
+    const jailbirds: Jailbird[] = await doSearch(page, firstNamesSubset[i]);
+    if (jailbirds?.length) {
+      webpageJailbirds = [...webpageJailbirds, ...jailbirds];
+    }
+  }
+
+  const lastNames = getLastNames();
+  const lastNamesSubset = getRandomSubset(lastNames, numOfSearches);
+
+  logMessage(
+    `Performing ${lastNamesSubset.length} last name searches`, 
+    JAILS.RICHMOND_CITY_JAIL
+  );
+  for (let i = 0; i < lastNamesSubset.length; i++) {
+    const jailbirds: Jailbird[] = await doSearch(page, lastNamesSubset[i]);
     if (jailbirds?.length) {
       webpageJailbirds = [...webpageJailbirds, ...jailbirds];
     }

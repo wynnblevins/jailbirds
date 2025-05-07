@@ -2,15 +2,15 @@ import { Jailbird } from "../../app";
 const { IgApiClient } = require('instagram-private-api');
 const fs = require('fs');
 const { get } = require('request-promise');
-const config = require('../utils/environment');
+const config = require('../../utils/environment');
 const { 
   updateJailbird, 
   findUnpostedJailbirds, 
   deleteJailbird,
   findJailbirdByInmateId
-} = require('./jailbirdService');
-const { shuffle } = require('./shuffleService');
-const { logMessage } = require('./loggerService');
+} = require('../jailbirdService');
+const { shuffle } = require('../shuffleService');
+const { logMessage } = require('../loggerService');
 import { readFile } from 'fs';
 import { promisify } from 'util';
 import { base64ToImage } from "./base64ToImgService";

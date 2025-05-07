@@ -1,8 +1,8 @@
 import { Jailbird } from "../../app";
 import { JAILS } from "../../utils/strings";
 import launchBrowser from "../browserLauncherService";
-const puppeteer = require("puppeteer");
-const { logMessage } = require('../services/loggerService');
+import { clickButton, selectFromMenu } from "../pageInteractions";
+const { logMessage } = require('../../services/loggerService');
 
 const inmatesPageURL: string = "https://ppd.henrico.us/searcharrest.aspx";
 
@@ -61,20 +61,22 @@ export const buildJailbirds = async (): Promise<Jailbird[]> => {
 
   // open up a headless chrome
   logMessage('Launching headless browser for Henrico page.', JAILS.HENRICO_COUNTY_REGIONAL_JAIL);
-  const browser = await launchBrowser();
+  const browser = await launchBrowser(false);
 
   // go to the Henrico inmates page
   logMessage(
     `Going to ${inmatesPageURL}`, 
     JAILS.HENRICO_COUNTY_REGIONAL_JAIL
   );
-  const page = await browser.newPage();
+  const page = await browser.targets()[browser.targets().length - 1].page();
   
   try {
+
     await page.goto(inmatesPageURL, {
       waitUntil: 'load',
       timeout: TEN_SECONDS,
     });
+    await page.waitForNavigation();
   } catch (e: any) {
     logMessage(
       `Error encountered while going to ${inmatesPageURL}`, 
@@ -87,22 +89,26 @@ export const buildJailbirds = async (): Promise<Jailbird[]> => {
     'Clicking search button.', 
     JAILS.HENRICO_COUNTY_REGIONAL_JAIL
   );
-  const form = await page.$('#ctl00_SearchContent_btnSubmit');
-  await form.evaluate( form => form.click() );
+
+  const buttonSelector = "#ctl00_SearchContent_btnSubmit"
+  await clickButton(page, buttonSelector);
+  await page.waitForNavigation();
 
   // wait for the search modal to disappear from the screen
+  // await page.waitForSelector('div.modalBody', {hidden: false});
   await page.waitForSelector('div.modalBody', {hidden: true});
 
   // tell page to load up 100 results
   try {
-    const rowsSelect = await page.waitForSelector("select[name='ctl00_SearchContent_gvData_length']");
-    await rowsSelect.select("100");
+    const selectorStr = "select[name='ctl00_SearchContent_gvData_length']";
+    await selectFromMenu(page, selectorStr, "100");
   } catch (e: any) {
     logMessage(
       `Encountered error while selecting rows.  Restarting buildJailbirds function.`, 
       JAILS.HENRICO_COUNTY_REGIONAL_JAIL
     );
-    buildJailbirds();
+    browser.close();
+    return await buildJailbirds();
   }
 
   // Get all the inmate name span elements using page.$$
