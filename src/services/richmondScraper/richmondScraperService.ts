@@ -1,6 +1,7 @@
 import { Jailbird } from "../../app";
 import { JAILS } from "../../utils/strings";
 import launchBrowser from "../browserLauncherService";
+import { clickButton } from "../pageInteractions";
 import scrapeTable from "./richmondTableScraperService";
 const { getRandNumInRange } = require('../randomNumberService');
 const { getFirstNames, getLastNames } = require('../../utils/names');
@@ -112,8 +113,7 @@ const doSearch = async (page, name: string): Promise<Jailbird[]> => {
   
   // find and click the search button
   const searchButtonSelector = '.form-group.btn.btn-primary';
-  const searchButton = await page.$(searchButtonSelector);
-  await searchButton.click();
+  await clickButton(page, searchButtonSelector);
 
   // wait for search results to come back before proceeding
   await page.waitForSelector('p label');
