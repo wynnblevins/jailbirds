@@ -9,7 +9,7 @@ const {
   deleteOldJailbirdsFromFacility,
 } = require("./services/jailbirdService");
 const { buildJailbirds: buildHenricoJailbirds } = require("./services/henricoScraperService");
-const { postToInsta, postJailbirdById } = require('./services/instagramPostService');
+const { postBatchToInsta, postJailbirdById } = require('./services/instagramPostService'); 
 const { filterSavedJailbirds } = require('./services/jailbirdFilterService');
 import { Types } from 'mongoose';
 
@@ -84,7 +84,7 @@ const performBatchPost = async () => {
   await saveNewJailbirdsToDB(uniqueJailbirds);
 
   // the remaining jailbirds will be what we want to post to instagram, do that here
-  return await postToInsta();
+  return await postBatchToInsta();
 };
 
 // check if we are performing the nightly batch or a manual run
@@ -110,7 +110,7 @@ if (argv.m) {
   }
 } else {
   // if not running in manual mode, start the cron job
-  cron.schedule('0 16 * * *', () => {
+  cron.schedule('0 17 * * *', () => {
     performBatchPost().then(() => {
       console.log('Program complete, stopping execution.');
     }).catch((e) => {
