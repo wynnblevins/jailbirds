@@ -83,25 +83,55 @@ const createDummyJailbirdWithId = (jailbird?: Partial<Jailbird>, _id?: mongoose.
   return jbWithId;
 };
 
-const createDummyElementHandle = async (htmlContent: string, selector: string): Promise<ElementHandle<Element>> => {
-  const browser = await puppeteer.launch();
-  const page = await browser.newPage();
+const createDummyPuppeteerElementHandle = (): ElementHandle => {
+  const dummyElementHandle = {
+    frame: jest.fn(),
+    $: jest.fn(),
+    $$: jest.fn(),
+    $eval: jest.fn(),
+    $$eval: jest.fn(),
+    isVisible: jest.fn(),
+    isHidden: jest.fn(),
+    waitForSelector: jest.fn(), 
+    toElement: jest.fn(), 
+    contentFrame: jest.fn(),
+    clickablePoint: jest.fn(), 
+    hover: jest.fn(), 
+    click: jest.fn(),
+    drag: jest.fn(), 
+    dragEnter: jest.fn(), 
+    dragOver: jest.fn(),    
+    drop: jest.fn(), 
+    dragAndDrop: jest.fn(), 
+    select: jest.fn(),
+    uploadFile: jest.fn(), 
+    tap: jest.fn(), 
+    touchStart: jest.fn(),
+    touchMove: jest.fn(), 
+    touchEnd: jest.fn(), 
+    focus: jest.fn(),
+    type: jest.fn(), 
+    press: jest.fn(), 
+    boundingBox: jest.fn(),
+    boxModel: jest.fn(), 
+    screenshot: jest.fn(), 
+    isIntersectingViewport: jest.fn(),
+    scrollIntoView: jest.fn(), 
+    autofill: jest.fn(), 
+    move: jest.fn(),
+    evaluate: jest.fn(), 
+    evaluateHandle: jest.fn(), 
+    getProperty: jest.fn(),
+    getProperties: jest.fn(), 
+    jsonValue: jest.fn(), 
+    asElement: jest.fn(),
+    dispose: jest.fn(), 
+    remoteObject: jest.fn()
+  };
 
-  await page.setContent(htmlContent);
-
-  // Wait for the element and get its handle
-  const elementHandle = await page.$(selector);
-
-  if (!elementHandle) {
-      throw new Error('Element not found');
-  }
-
-  // we need to copy the element handle BEFORE we can close the browser 
-  const elementHandleCopy = JSON.parse(JSON.stringify(elementHandle))
-  browser.close();
-  
-  return elementHandleCopy;
-}
+  // @ts-ignore
+  return dummyElementHandle;
+};
 
 const createDummyPuppeteerPage = (): Page => {
   const dummyPage = {
@@ -246,7 +276,7 @@ export {
   DUMMY_INMATE_ID_4,
   createDummyJailbird,
   createDummyJailbirdWithId,
-  createDummyElementHandle,
+  createDummyPuppeteerElementHandle,
   createDummyPuppeteerBrowser,
   createDummyPuppeteerPage
 }
