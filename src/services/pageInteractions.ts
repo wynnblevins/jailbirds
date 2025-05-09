@@ -50,14 +50,48 @@ const typeInField = async (
   text: string, 
   clearField?: boolean
 ) => {
-  const textField = await getHTMLElement(page, fieldSelector);
+  let textField;
+  try {
+    textField = await getHTMLElement(page, fieldSelector);
+  } catch (e: any) {
+    const errorStr = `Error encountered while typing in text field: ${e}`;
+    logMessage(errorStr);
+    throw new Error(errorStr);
+  }
   if (clearField) await textField.click({ clickCount: 3 });
   return await textField.type(text);
 };
+
+/**
+ * A function which uses puppeteer in order to clear any text from a text field
+ * 
+ * @param page a puppeteer page object
+ * @param fieldSelector the CSS selector string to use in order to get the text field
+ * 
+ * @returns a promise for the result clearing the text field
+ */
+const clearTextInput = async (page: Page, fieldSelector: string) => {
+  const textField = await getHTMLElement(page, fieldSelector);
+  await textField.click({ clickCount: 4 });
+  return await textField.type(String.fromCharCode(8));
+};
+
+/**
+ * A function which places the browser's focus on a specific input or page item
+ * 
+ * @param page a puppeteer page object
+ * @param elementSelector a selector for an element on the page
+ */
+const focusOn = async (page: Page, fieldSelector: string) => {
+  await page.waitForSelector(fieldSelector);
+  await page.focus(fieldSelector);
+}
 
 export {
   clickButton,
   selectFromMenu,
   typeInField,
+  focusOn,
+  clearTextInput,
   getHTMLElement
 } 

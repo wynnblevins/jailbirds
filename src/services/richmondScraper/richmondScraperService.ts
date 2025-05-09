@@ -1,7 +1,9 @@
+import { Page } from "puppeteer";
 import { Jailbird } from "../../app";
 import { JAILS } from "../../utils/strings";
 import launchBrowser from "../browserLauncherService";
-import { clickButton } from "../pageInteractions";
+import executeWithRetries from "../executeWithRetriesService";
+import { clearTextInput, clickButton, focusOn, typeInField } from "../pageInteractions";
 import scrapeTable from "./richmondTableScraperService";
 const { getRandNumInRange } = require('../randomNumberService');
 const { getFirstNames, getLastNames } = require('../../utils/names');
@@ -23,30 +25,70 @@ const loadPage = async (page) => {
 };
 
 export const buildJailbirds = async (): Promise<Jailbird[]> => {
-  logMessage('Launching headless browser for Richmond page.', JAILS.RICHMOND_CITY_JAIL)
-  const browser = await launchBrowser();
-
-  // go to the Richmond inmates page
-  logMessage(`Going to ${inmatesPageURL}`, JAILS.RICHMOND_CITY_JAIL);
-  const page = await browser.newPage();
-  await loadPage(page);
-
-  // get past the captcha screen
   try {
+    // We'll do first and last name searches in parallel
+    logMessage('Launching headless browser for Richmond page.', JAILS.RICHMOND_CITY_JAIL)
+    const browser = await launchBrowser(false);
+
+    // go to the Richmond inmates page
+    logMessage(`Going to ${inmatesPageURL}`, JAILS.RICHMOND_CITY_JAIL);
+    const firstNamePagePromise = browser.newPage();
+    const lastNamePagePromise = browser.newPage();
+    const pageLaunchPromises = [firstNamePagePromise, lastNamePagePromise];
+    const pages = await Promise.all(pageLaunchPromises);
+    const firstNamePage = pages[0];
+    const lastNamePage = pages[1];
+
     logMessage(
-      'Attempting to prove humanity to the Richmond Jail page', 
+      `Loading page at ${inmatesPageURL} for first name searches`, 
       JAILS.RICHMOND_CITY_JAIL
     );
-    return proveHumanity(page).then(async () => {
-      // get a list of jailbirds from the Richmond Jail webpage
-      const webpageJailbirds: Jailbird[] = await doJBSearches(page);
-      browser.close();
-      return webpageJailbirds;
-    }).catch((e: any) => {
-      proveHumanity(page);
-    });
+    const firstNamePageLoadPromise = loadPage(firstNamePage);
+    logMessage(
+      `Loading page at ${inmatesPageURL} for last name searches`,
+      JAILS.RICHMOND_CITY_JAIL
+    );
+    const lastNamePageLoadPromise = loadPage(lastNamePage);
+    const pageLoadPromises = [
+      firstNamePageLoadPromise, 
+      lastNamePageLoadPromise
+    ];
+    await Promise.all(pageLoadPromises);
+
+    logMessage(`Proving humanity`, JAILS.RICHMOND_CITY_JAIL);
+    const firstNamePageHumanityPromise = proveHumanity(firstNamePage);
+    const lastNamePageHumanityPromise = proveHumanity(lastNamePage);
+    const humanityPromises = [firstNamePageHumanityPromise, lastNamePageHumanityPromise];
+    await Promise.all(humanityPromises);
+
+    logMessage(`Doing first name searches`, JAILS.RICHMOND_CITY_JAIL);
+    const FIRST_NAME_SEARCH_BOX_ID = "#searchFirstName";
+    const firstNameJBPromise: Promise<Jailbird[]> = doJBSearches(firstNamePage, FIRST_NAME_SEARCH_BOX_ID);  
+
+    logMessage(`Doing last name searches`, JAILS.RICHMOND_CITY_JAIL);
+    const LAST_NAME_SEARCH_BOX_ID = "#searchLastName";
+    const lastNameJBPromise: Promise<Jailbird[]> = doJBSearches(lastNamePage, LAST_NAME_SEARCH_BOX_ID);  
+    
+    const scraperPromises: Promise<any>[] = [];
+    scraperPromises.push(firstNameJBPromise);
+    scraperPromises.push(lastNameJBPromise);
+    const resolvedData = await Promise.all(scraperPromises);
+
+    logMessage(`Closing headless browser`, JAILS.RICHMOND_CITY_JAIL);
+    browser.close();
+
+    const flattenedData = resolvedData.flat(1);
+    logMessage(
+      `Returning ${flattenedData.length} jailbirds from scraper service`,
+      JAILS.RICHMOND_CITY_JAIL
+    );
+    return flattenedData;
   } catch (e: any) {
-    logMessage(`Error encounted while proving humanity, ${e}`);
+    logMessage(
+      `Error encounted while building Jailbirds list, ${e}`, 
+      JAILS.RICHMOND_CITY_JAIL
+    );
+    throw new Error(`Error encounted while building Richmond jailbirds list, ${e}`)
   } 
 };
 
@@ -55,36 +97,26 @@ const getRandomSubset = (arr, size) => {
   return shuffled.slice(0, size);
 }
 
-const doJBSearches = async (page): Promise<Jailbird[]> => {
+const doJBSearches = async (page: Page, searchFieldID: string): Promise<Jailbird[]> => {
   let webpageJailbirds: Jailbird[] = [];
   
   const upper = +config.richmond.upperSearchCount;
   const lower = +config.richmond.upperSearchCount;
   const numOfSearches = getRandNumInRange(lower, upper)
   
+  // do name searches
   const firstNames = getFirstNames();
   const firstNamesSubset = getRandomSubset(firstNames, numOfSearches);
-
   logMessage(
     `Performing ${firstNamesSubset.length} first name searches`, 
     JAILS.RICHMOND_CITY_JAIL
   );
   for (let i = 0; i < firstNamesSubset.length; i++) {
-    const jailbirds: Jailbird[] = await doSearch(page, firstNamesSubset[i]);
-    if (jailbirds?.length) {
-      webpageJailbirds = [...webpageJailbirds, ...jailbirds];
-    }
-  }
-
-  const lastNames = getLastNames();
-  const lastNamesSubset = getRandomSubset(lastNames, numOfSearches);
-
-  logMessage(
-    `Performing ${lastNamesSubset.length} last name searches`, 
-    JAILS.RICHMOND_CITY_JAIL
-  );
-  for (let i = 0; i < lastNamesSubset.length; i++) {
-    const jailbirds: Jailbird[] = await doSearch(page, lastNamesSubset[i]);
+    const jailbirds: Jailbird[] = await doSearch(
+      page, 
+      firstNamesSubset[i], 
+      searchFieldID
+    );
     if (jailbirds?.length) {
       webpageJailbirds = [...webpageJailbirds, ...jailbirds];
     }
@@ -93,31 +125,60 @@ const doJBSearches = async (page): Promise<Jailbird[]> => {
   return webpageJailbirds;
 };
 
-const doSearch = async (page, name: string): Promise<Jailbird[]> => {
+/**
+ * Performs a search in the provided search field for a given name 
+ * 
+ * @param page the puppeteer page object
+ * @param name the name string to do the search for
+ * @param searchBoxID the ID of the search field on the page
+ * @returns a promise for a list of parsed jailbird objects for a given name 
+ */
+const doSearch = async (page: Page, name: string, searchBoxID: string): Promise<Jailbird[]> => {
   let webpageJailbirds: Jailbird[] = [];
-  const OFFENDER_DETAILS_ID = '#detailsOfOffender';
 
-  // focus on the first name input
-  const FIRST_NAME_SEARCH_BOX_ID = '#searchFirstName';
-  await page.waitForSelector(FIRST_NAME_SEARCH_BOX_ID);
-  await page.focus(FIRST_NAME_SEARCH_BOX_ID);
+  // element selectors
+  const OFFENDER_DETAILS_ID = '#detailsOfOffender';
+  const SEARCH_BTN_SELECTOR = '.form-group.btn.btn-primary';
+
+  try {
+    await executeWithRetries(async () => {
+      logMessage(
+        `Putting browser focus on first name search box to search for the name ${name}`
+      );
+      await focusOn(page, searchBoxID);
+    });
+  } catch (e: any) {
+    throw new Error(e);
+  }
 
   // type the given name into the first name search box
-  logMessage(
-    `Doing a search for the name ${name}`, 
-    JAILS.RICHMOND_CITY_JAIL
-  );
-  const firstNameSearch = await page.$(FIRST_NAME_SEARCH_BOX_ID);
-  await firstNameSearch.click({ clickCount: 3 })
-  await firstNameSearch.type(name);
+  try {
+    await executeWithRetries(async () => {
+      logMessage(
+        `Doing a search for the name ${name}`, 
+        JAILS.RICHMOND_CITY_JAIL
+      );
+      await typeInField(page, searchBoxID, name, true)
+    });
+  } catch (e: any) {
+    throw new Error(e);
+  }
   
   // find and click the search button
-  const searchButtonSelector = '.form-group.btn.btn-primary';
-  await clickButton(page, searchButtonSelector);
-
+  try {
+    await executeWithRetries(async () => {
+      logMessage(
+        `Clicking the search button for the name ${name}`, 
+        JAILS.RICHMOND_CITY_JAIL
+      );
+      await clickButton(page, SEARCH_BTN_SELECTOR);
+    });
+  } catch (e: any) {
+    throw new Error(e);
+  }
+  
   // wait for search results to come back before proceeding
   await page.waitForSelector('p label');
-
   let viewMoreBtns = await getViewButtons(page);
 
   // there's the possibility there wont be any results for any given name
@@ -152,6 +213,10 @@ const doSearch = async (page, name: string): Promise<Jailbird[]> => {
     }
   }
   
+  logMessage(
+    `returning ${webpageJailbirds.length} webpage jailbirds for the name ${name}`,
+    JAILS.RICHMOND_CITY_JAIL
+  );
   return webpageJailbirds;
 };
 
