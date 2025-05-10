@@ -1,6 +1,6 @@
 import { Page } from "puppeteer";
 import { Jailbird } from "../../app";
-import { JAILS } from "../../utils/strings";
+import { JAILS, JAIL_URLS } from "../../utils/strings";
 import launchBrowser from "../browserLauncherService";
 import executeWithRetries from "../executeWithRetriesService";
 import { clearTextInput, clickButton, focusOn, typeInField } from "../pageInteractions";
@@ -11,16 +11,16 @@ const config = require('../../utils/environment');
 const proveHumanity = require('./richmondCaptchaService')
 const { logMessage } = require('../loggerService');
 
-const inmatesPageURL: string = "https://omsweb.secure-gps.com/jtclientweb/jailtracker/index/Richmond_Co_VA";
-
 const loadPage = async (page) => {
   try {
-    await page.goto(inmatesPageURL, {
+    await page.goto(JAIL_URLS.RICHMOND_CITY_JAIL, {
       waitUntil: 'load',
       timeout: 10000,
     });
   } catch (e: any) {
-    logMessage(`Error encountered while loading initial captcha page at ${inmatesPageURL}`);
+    logMessage(
+      `Error encountered while loading initial captcha page at ${JAILS.RICHMOND_CITY_JAIL}: ${e}`
+    );
   }
 };
 
@@ -31,7 +31,9 @@ export const buildJailbirds = async (): Promise<Jailbird[]> => {
     const browser = await launchBrowser(false);
 
     // go to the Richmond inmates page
-    logMessage(`Going to ${inmatesPageURL}`, JAILS.RICHMOND_CITY_JAIL);
+    logMessage(
+      `Going to ${JAIL_URLS.RICHMOND_CITY_JAIL}`, JAILS.RICHMOND_CITY_JAIL
+    );
     const firstNamePagePromise = browser.newPage();
     const lastNamePagePromise = browser.newPage();
     const pageLaunchPromises = [firstNamePagePromise, lastNamePagePromise];
@@ -40,12 +42,12 @@ export const buildJailbirds = async (): Promise<Jailbird[]> => {
     const lastNamePage = pages[1];
 
     logMessage(
-      `Loading page at ${inmatesPageURL} for first name searches`, 
+      `Loading page at ${JAIL_URLS.RICHMOND_CITY_JAIL} for first name searches`, 
       JAILS.RICHMOND_CITY_JAIL
     );
     const firstNamePageLoadPromise = loadPage(firstNamePage);
     logMessage(
-      `Loading page at ${inmatesPageURL} for last name searches`,
+      `Loading page at ${JAIL_URLS.RICHMOND_CITY_JAIL} for last name searches`,
       JAILS.RICHMOND_CITY_JAIL
     );
     const lastNamePageLoadPromise = loadPage(lastNamePage);
