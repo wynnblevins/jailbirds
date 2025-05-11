@@ -145,7 +145,8 @@ const doSearch = async (page: Page, name: string, searchBoxID: string): Promise<
   try {
     await executeWithRetries(async () => {
       logMessage(
-        `Putting browser focus on first name search box to search for the name ${name}`
+        `Putting browser focus on first name search box to search for the name ${name}`,
+        JAILS.RICHMOND_CITY_JAIL
       );
       await focusOn(page, searchBoxID);
     });

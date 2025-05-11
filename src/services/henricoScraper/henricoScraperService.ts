@@ -59,14 +59,17 @@ export const buildJailbirds = async (): Promise<Jailbird[]> => {
   let page = null;
 
   // open up a headless chrome
-  logMessage('Launching headless browser for Henrico page.');
+  logMessage(
+    'Launching headless browser for Henrico page.', 
+    JAILS.HENRICO_COUNTY_REGIONAL_JAIL
+  );
   const browser = await puppeteer.launch({ 
     headless: true,
   });
 
   // go to the Henrico jail page
   try {
-    logMessage(`Going to ${inmatesPageURL}`);
+    logMessage(`Going to ${inmatesPageURL}`, JAILS.HENRICO_COUNTY_REGIONAL_JAIL);
     page = await browser.newPage();
     await page.goto(inmatesPageURL, {
       waitUntil: 'load',
