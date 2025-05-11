@@ -1,7 +1,7 @@
 import { Page } from "puppeteer";
 import { Jailbird } from "../../app";
 import { JAILS, JAIL_URLS } from "../../utils/strings";
-import launchBrowser from "../browserLauncherService";
+import launchBrowser from "../browserLaunchService/browserLauncherService";
 import executeWithRetries from "../executeWithRetriesService";
 import { clearTextInput, clickButton, focusOn, typeInField } from "../pageInteractions";
 import scrapeTable from "./richmondTableScraperService";

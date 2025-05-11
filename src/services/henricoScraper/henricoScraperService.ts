@@ -3,6 +3,7 @@ import { Jailbird } from "../../app";
 import { JAILS } from "../../utils/strings";
 import { logMessage } from "../loggerService";
 import { selectFromMenu } from "../pageInteractions";
+import launchBrowser from "../browserLaunchService/browserLauncherService";
 
 const inmatesPageURL: string = "https://ppd.henrico.us/searcharrest.aspx";
 
@@ -63,9 +64,7 @@ export const buildJailbirds = async (): Promise<Jailbird[]> => {
     'Launching headless browser for Henrico page.', 
     JAILS.HENRICO_COUNTY_REGIONAL_JAIL
   );
-  const browser = await puppeteer.launch({ 
-    headless: true,
-  });
+  const browser = await launchBrowser();
 
   // go to the Henrico jail page
   try {

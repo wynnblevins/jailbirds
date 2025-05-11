@@ -6,7 +6,7 @@ import {
   createDummyPuppeteerPage 
 } from "../testUtils/mockDataGenerator";
 import puppeteer, { Browser, Page } from "puppeteer";
-import launchBrowser from "./browserLauncherService";
+import launchBrowser from "./browserLaunchService/browserLauncherService";
 
 import * as pageInteractions from './pageInteractions';
 
