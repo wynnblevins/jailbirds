@@ -1,5 +1,3 @@
-import { Jailbird } from "../app";
-
 const shuffle = (array: any[]) => {
   var currentIndex = array.length, temporaryValue, randomIndex;
   

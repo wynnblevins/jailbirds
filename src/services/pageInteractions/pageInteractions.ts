@@ -1,4 +1,5 @@
 import { Page } from "puppeteer";
+import { logMessage } from "../loggerService";
 import { getHTMLElement } from "./htmlElementService";
 
 /**

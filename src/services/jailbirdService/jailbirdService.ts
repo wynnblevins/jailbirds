@@ -1,5 +1,5 @@
-import { Jailbird as IJailbird } from "../app";
-import { Jailbird } from "../models/Jailbird";  
+import { Jailbird as IJailbird } from "../../app";
+import { Jailbird } from "../../models";  
 
 const findAllJailbirds = async (): Promise<IJailbird[]> => {
   const result = await Jailbird.find();

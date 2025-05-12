@@ -2,11 +2,9 @@ import * as pageInteractionActions from "./pageInteractions";
 import * as internalPageInteractions from "./htmlElementService";
 import { 
   createDummyPuppeteerElementHandle, 
-  createDummyPuppeteerBrowser, 
   createDummyPuppeteerPage 
-} from "../testUtils/mockDataGenerator";
-import puppeteer, { Browser, Page } from "puppeteer";
-import launchBrowser from "./browserLaunchService/browserLauncherService";
+} from "../../testUtils/mockDataGenerator";
+import { Page } from "puppeteer";
 
 import * as pageInteractions from './pageInteractions';
 

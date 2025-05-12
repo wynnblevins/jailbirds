@@ -1,9 +1,13 @@
 const mockingoose = require('mockingoose');
-import { Jailbird } from "../models/Jailbird";  
-import { deleteJailbird, findJailbirdByInmateId, findAllJailbirds, findJailbirdById } from './jailbirdService';
-import { DUMMY_INMATE_ID_0, createDummyJailbird, createDummyJailbirdWithId } from "../testUtils/mockDataGenerator";
-import { jailbirdWithIdField } from "../testUtils/expectations";
-import { ObjectId } from "mongoose";
+import { Jailbird } from "../../models";  
+import { createDummyJailbird } from "../../testUtils/mockDataGenerator";
+import { jailbirdWithIdField } from "../../testUtils/expectations";
+import { 
+  deleteJailbird, 
+  findJailbirdByInmateId, 
+  findAllJailbirds, 
+  findJailbirdById 
+} from './jailbirdService';
 
 describe("jailbirdService", () => {
   let jailbird0, jailbird1, jailbird2;

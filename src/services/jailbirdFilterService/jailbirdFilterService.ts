@@ -1,4 +1,4 @@
-import { Jailbird } from "../app";
+import { Jailbird } from "../../app";
 const {
   findJailbirdByInmateId
 } = require("./jailbirdService");

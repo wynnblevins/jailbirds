@@ -1,11 +1,9 @@
 import puppeteer, { Browser } from "puppeteer";
 
-const launchBrowser = async (headless: boolean = true): Promise<any> => {
+export const launchBrowser = async (headless: boolean = true): Promise<Browser> => {
   const browser = await puppeteer.launch({ 
     headless,
   });
 
   return browser;
 };
-
-export default launchBrowser;

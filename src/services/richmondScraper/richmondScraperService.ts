@@ -1,15 +1,89 @@
 import { Page } from "puppeteer";
 import { Jailbird } from "../../app";
 import { JAILS, JAIL_URLS } from "../../utils/strings";
-import launchBrowser from "../browserLaunchService/browserLauncherService";
-import executeWithRetries from "../executeWithRetriesService";
-import { clearTextInput, clickButton, focusOn, typeInField } from "../pageInteractions";
+import { launchBrowser } from "../browserLaunchService/browserLauncherService";
+import executeWithRetries from "../executeWithRetriesService/executeWithRetriesService";
+import { clickButton, focusOn, typeInField } from "../pageInteractions";
 import scrapeTable from "./richmondTableScraperService";
+import { proveHumanity } from "../captchaService/capchaService";
 const { getRandNumInRange } = require('../randomNumberService');
 const { getFirstNames, getLastNames } = require('../../utils/names');
 const config = require('../../utils/environment');
-const proveHumanity = require('./richmondCaptchaService')
 const { logMessage } = require('../loggerService');
+
+export const buildJailbirds = async (attempts: number = 0): Promise<Jailbird[]> => {
+  let browser = null;
+  
+  try {
+    return executeWithRetries(async () => {
+      // We'll do first and last name searches in parallel
+      logMessage('Launching headless browser for Richmond page.', JAILS.RICHMOND_CITY_JAIL)
+      browser = await launchBrowser(false);
+
+      // go to the Richmond inmates page
+      logMessage(
+        `Going to ${JAIL_URLS.RICHMOND_CITY_JAIL}`, JAILS.RICHMOND_CITY_JAIL
+      );
+      const firstNamePagePromise = browser.newPage();
+      const lastNamePagePromise = browser.newPage();
+      const pageLaunchPromises = [firstNamePagePromise, lastNamePagePromise];
+      const pages = await Promise.all(pageLaunchPromises);
+      const firstNamePage = pages[0];
+      const lastNamePage = pages[1];
+
+      logMessage(
+        `Loading page at ${JAIL_URLS.RICHMOND_CITY_JAIL} for first name searches`, 
+        JAILS.RICHMOND_CITY_JAIL
+      );
+      const firstNamePageLoadPromise = loadPage(firstNamePage);
+      logMessage(
+        `Loading page at ${JAIL_URLS.RICHMOND_CITY_JAIL} for last name searches`,
+        JAILS.RICHMOND_CITY_JAIL
+      );
+      const lastNamePageLoadPromise = loadPage(lastNamePage);
+      const pageLoadPromises = [
+        firstNamePageLoadPromise, 
+        lastNamePageLoadPromise
+      ];
+      await Promise.all(pageLoadPromises);
+
+      logMessage(`Proving humanity`, JAILS.RICHMOND_CITY_JAIL);
+      const firstNamePageHumanityPromise = proveHumanity(firstNamePage);
+      const lastNamePageHumanityPromise = proveHumanity(lastNamePage);
+      const humanityPromises = [firstNamePageHumanityPromise, lastNamePageHumanityPromise];
+      await Promise.all(humanityPromises);
+
+      logMessage(`Doing first name searches`, JAILS.RICHMOND_CITY_JAIL);
+      const FIRST_NAME_SEARCH_BOX_ID = "#searchFirstName";
+      const firstNameJBPromise: Promise<Jailbird[]> = doJBSearches(firstNamePage, FIRST_NAME_SEARCH_BOX_ID);  
+
+      logMessage(`Doing last name searches`, JAILS.RICHMOND_CITY_JAIL);
+      const LAST_NAME_SEARCH_BOX_ID = "#searchLastName";
+      const lastNameJBPromise: Promise<Jailbird[]> = doJBSearches(lastNamePage, LAST_NAME_SEARCH_BOX_ID);  
+      
+      const scraperPromises: Promise<any>[] = [];
+      scraperPromises.push(firstNameJBPromise);
+      scraperPromises.push(lastNameJBPromise);
+      const resolvedData = await Promise.all(scraperPromises);
+
+      logMessage(`Closing headless browser`, JAILS.RICHMOND_CITY_JAIL);
+      browser.close();
+
+      const flattenedData = resolvedData.flat(1);
+      logMessage(
+        `Returning ${flattenedData.length} jailbirds from scraper service`,
+        JAILS.RICHMOND_CITY_JAIL
+      );
+      return flattenedData;
+    });
+  } catch (e: any) {
+    logMessage(
+      `Error encounted while building Jailbirds list, ${e}`, 
+      JAILS.RICHMOND_CITY_JAIL
+    );
+    browser?.close();
+  } 
+};
 
 const loadPage = async (page) => {
   try {
@@ -22,76 +96,6 @@ const loadPage = async (page) => {
       `Error encountered while loading initial captcha page at ${JAILS.RICHMOND_CITY_JAIL}: ${e}`
     );
   }
-};
-
-export const buildJailbirds = async (): Promise<Jailbird[]> => {
-  try {
-    // We'll do first and last name searches in parallel
-    logMessage('Launching headless browser for Richmond page.', JAILS.RICHMOND_CITY_JAIL)
-    const browser = await launchBrowser(false);
-
-    // go to the Richmond inmates page
-    logMessage(
-      `Going to ${JAIL_URLS.RICHMOND_CITY_JAIL}`, JAILS.RICHMOND_CITY_JAIL
-    );
-    const firstNamePagePromise = browser.newPage();
-    const lastNamePagePromise = browser.newPage();
-    const pageLaunchPromises = [firstNamePagePromise, lastNamePagePromise];
-    const pages = await Promise.all(pageLaunchPromises);
-    const firstNamePage = pages[0];
-    const lastNamePage = pages[1];
-
-    logMessage(
-      `Loading page at ${JAIL_URLS.RICHMOND_CITY_JAIL} for first name searches`, 
-      JAILS.RICHMOND_CITY_JAIL
-    );
-    const firstNamePageLoadPromise = loadPage(firstNamePage);
-    logMessage(
-      `Loading page at ${JAIL_URLS.RICHMOND_CITY_JAIL} for last name searches`,
-      JAILS.RICHMOND_CITY_JAIL
-    );
-    const lastNamePageLoadPromise = loadPage(lastNamePage);
-    const pageLoadPromises = [
-      firstNamePageLoadPromise, 
-      lastNamePageLoadPromise
-    ];
-    await Promise.all(pageLoadPromises);
-
-    logMessage(`Proving humanity`, JAILS.RICHMOND_CITY_JAIL);
-    const firstNamePageHumanityPromise = proveHumanity(firstNamePage);
-    const lastNamePageHumanityPromise = proveHumanity(lastNamePage);
-    const humanityPromises = [firstNamePageHumanityPromise, lastNamePageHumanityPromise];
-    await Promise.all(humanityPromises);
-
-    logMessage(`Doing first name searches`, JAILS.RICHMOND_CITY_JAIL);
-    const FIRST_NAME_SEARCH_BOX_ID = "#searchFirstName";
-    const firstNameJBPromise: Promise<Jailbird[]> = doJBSearches(firstNamePage, FIRST_NAME_SEARCH_BOX_ID);  
-
-    logMessage(`Doing last name searches`, JAILS.RICHMOND_CITY_JAIL);
-    const LAST_NAME_SEARCH_BOX_ID = "#searchLastName";
-    const lastNameJBPromise: Promise<Jailbird[]> = doJBSearches(lastNamePage, LAST_NAME_SEARCH_BOX_ID);  
-    
-    const scraperPromises: Promise<any>[] = [];
-    scraperPromises.push(firstNameJBPromise);
-    scraperPromises.push(lastNameJBPromise);
-    const resolvedData = await Promise.all(scraperPromises);
-
-    logMessage(`Closing headless browser`, JAILS.RICHMOND_CITY_JAIL);
-    browser.close();
-
-    const flattenedData = resolvedData.flat(1);
-    logMessage(
-      `Returning ${flattenedData.length} jailbirds from scraper service`,
-      JAILS.RICHMOND_CITY_JAIL
-    );
-    return flattenedData;
-  } catch (e: any) {
-    logMessage(
-      `Error encounted while building Jailbirds list, ${e}`, 
-      JAILS.RICHMOND_CITY_JAIL
-    );
-    throw new Error(`Error encounted while building Richmond jailbirds list, ${e}`)
-  } 
 };
 
 const getRandomSubset = (arr, size) => {

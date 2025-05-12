@@ -1,6 +1,6 @@
 import puppeteer from "puppeteer";
 import { createDummyPuppeteerBrowser } from "../../testUtils/mockDataGenerator";
-import launchBrowser from "./browserLauncherService";
+import { launchBrowser } from "./browserLauncherService";
 
 describe("launchBrowser", () => {
   const browser = createDummyPuppeteerBrowser();

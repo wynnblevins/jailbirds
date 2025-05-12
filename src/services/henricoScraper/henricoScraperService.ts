@@ -1,9 +1,8 @@
-import puppeteer from "puppeteer";
 import { Jailbird } from "../../app";
 import { JAILS } from "../../utils/strings";
-import { logMessage } from "../loggerService";
+import { logMessage } from "../loggerService/loggerService";
 import { selectFromMenu } from "../pageInteractions";
-import launchBrowser from "../browserLaunchService/browserLauncherService";
+import { launchBrowser } from "../browserLaunchService";
 
 const inmatesPageURL: string = "https://ppd.henrico.us/searcharrest.aspx";
 

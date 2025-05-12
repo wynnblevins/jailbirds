@@ -1,7 +1,3 @@
-
-
-const JAIL_NAME = require('../utils/strings');
-
 /**
  * function which logs a given message to the console and optionally 
  * appends the name of the jail the specific message is related to

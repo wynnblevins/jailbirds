@@ -20,4 +20,6 @@ const downloadFile = (url: string, ndx: number) => {
   }
 };
 
-module.exports = { downloadFile };
+export {
+  downloadFile
+}
