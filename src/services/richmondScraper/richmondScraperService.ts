@@ -11,25 +11,22 @@ const { getFirstNames, getLastNames } = require('../../utils/names');
 const config = require('../../utils/environment');
 const { logMessage } = require('../loggerService');
 
-export const buildJailbirds = async (attempts: number = 0): Promise<Jailbird[]> => {
-  let browser = null;
+export const buildJailbirds = async (): Promise<Jailbird[]> => {
+  let firstNameBrowser = null, lastNameBrowser = null;
   
   try {
     return executeWithRetries(async () => {
       // We'll do first and last name searches in parallel
-      logMessage('Launching headless browser for Richmond page.', JAILS.RICHMOND_CITY_JAIL)
-      browser = await launchBrowser(false);
+      logMessage('Launching headless browsers for Richmond page.', JAILS.RICHMOND_CITY_JAIL)
+      firstNameBrowser = await launchBrowser();
+      lastNameBrowser = await launchBrowser();
 
       // go to the Richmond inmates page
       logMessage(
         `Going to ${JAIL_URLS.RICHMOND_CITY_JAIL}`, JAILS.RICHMOND_CITY_JAIL
       );
-      const firstNamePagePromise = browser.newPage();
-      const lastNamePagePromise = browser.newPage();
-      const pageLaunchPromises = [firstNamePagePromise, lastNamePagePromise];
-      const pages = await Promise.all(pageLaunchPromises);
-      const firstNamePage = pages[0];
-      const lastNamePage = pages[1];
+      const firstNamePage = await firstNameBrowser.newPage();
+      const lastNamePage = await lastNameBrowser.newPage();
 
       logMessage(
         `Loading page at ${JAIL_URLS.RICHMOND_CITY_JAIL} for first name searches`, 
@@ -55,19 +52,32 @@ export const buildJailbirds = async (attempts: number = 0): Promise<Jailbird[]> 
 
       logMessage(`Doing first name searches`, JAILS.RICHMOND_CITY_JAIL);
       const FIRST_NAME_SEARCH_BOX_ID = "#searchFirstName";
-      const firstNameJBPromise: Promise<Jailbird[]> = doJBSearches(firstNamePage, FIRST_NAME_SEARCH_BOX_ID);  
+      const firstNames = getFirstNames();
+      await firstNamePage.bringToFront();
+      const firstNameJBPromise: Promise<Jailbird[]> = doJBSearches(
+        firstNamePage, 
+        firstNames, 
+        FIRST_NAME_SEARCH_BOX_ID
+      );  
 
       logMessage(`Doing last name searches`, JAILS.RICHMOND_CITY_JAIL);
       const LAST_NAME_SEARCH_BOX_ID = "#searchLastName";
-      const lastNameJBPromise: Promise<Jailbird[]> = doJBSearches(lastNamePage, LAST_NAME_SEARCH_BOX_ID);  
+      const lastNames = getLastNames();
+      await lastNamePage.bringToFront();
+      const lastNameJBPromise: Promise<Jailbird[]> = doJBSearches(
+        lastNamePage, 
+        lastNames, 
+        LAST_NAME_SEARCH_BOX_ID
+      );  
       
       const scraperPromises: Promise<any>[] = [];
       scraperPromises.push(firstNameJBPromise);
       scraperPromises.push(lastNameJBPromise);
       const resolvedData = await Promise.all(scraperPromises);
 
-      logMessage(`Closing headless browser`, JAILS.RICHMOND_CITY_JAIL);
-      browser.close();
+      logMessage(`Closing headless browsers`, JAILS.RICHMOND_CITY_JAIL);
+      firstNameBrowser.close();
+      lastNameBrowser.close();
 
       const flattenedData = resolvedData.flat(1);
       logMessage(
@@ -81,7 +91,9 @@ export const buildJailbirds = async (attempts: number = 0): Promise<Jailbird[]> 
       `Error encounted while building Jailbirds list, ${e}`, 
       JAILS.RICHMOND_CITY_JAIL
     );
-    browser?.close();
+    firstNameBrowser.close();
+    lastNameBrowser.close();
+    throw new Error(`Error encounted while building Jailbirds list, ${e}`);
   } 
 };
 
@@ -103,7 +115,7 @@ const getRandomSubset = (arr, size) => {
   return shuffled.slice(0, size);
 }
 
-const doJBSearches = async (page: Page, searchFieldID: string): Promise<Jailbird[]> => {
+const doJBSearches = async (page: Page, names: string[], searchFieldID: string): Promise<Jailbird[]> => {
   let webpageJailbirds: Jailbird[] = [];
   
   const upper = +config.richmond.upperSearchCount;
@@ -111,16 +123,15 @@ const doJBSearches = async (page: Page, searchFieldID: string): Promise<Jailbird
   const numOfSearches = getRandNumInRange(lower, upper)
   
   // do name searches
-  const firstNames = getFirstNames();
-  const firstNamesSubset = getRandomSubset(firstNames, numOfSearches);
+  const namesSubset = getRandomSubset(names, numOfSearches);
   logMessage(
-    `Performing ${firstNamesSubset.length} first name searches`, 
+    `Performing ${namesSubset.length} first name searches`, 
     JAILS.RICHMOND_CITY_JAIL
   );
-  for (let i = 0; i < firstNamesSubset.length; i++) {
+  for (let i = 0; i < namesSubset.length; i++) {
     const jailbirds: Jailbird[] = await doSearch(
       page, 
-      firstNamesSubset[i], 
+      namesSubset[i], 
       searchFieldID
     );
     if (jailbirds?.length) {

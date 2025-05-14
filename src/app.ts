@@ -101,8 +101,15 @@ const saveNewJailbirdsToDB = async (newJailbirds: Jailbird[]) => {
 };
 
 const getJailbirdsToPost = async () => {
-  // get the current jailbirds from the webpages
-  const webpageJailbirds = await scrapeWebpages();
+  let webpageJailbirds: Jailbird[] = [];
+  try {
+    // get the current jailbirds from the webpages
+    webpageJailbirds = await scrapeWebpages();
+  } catch (e: any) {
+    logMessage(
+      `Error encountered while scraping webpage, no new jailbirds will be saved to the db: ${e}`
+    );
+  }
 
   // get a list of all known jailbirds (posted or unposted) from the DB
   const allDbJailbirds = await findAllJailbirds();
