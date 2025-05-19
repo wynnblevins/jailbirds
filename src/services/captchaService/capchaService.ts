@@ -1,7 +1,7 @@
 import { Page } from "puppeteer";
 import { getCaptchaSolution, submitCaptcha } from "../../api/captcha";
-import { delayMs } from "../delayService/delayService";
-import { logMessage } from "../loggerService/loggerService";
+import { delayMs } from "../delayService";
+import { logMessage } from "../loggerService";
 
 const CAPTCHA_API_RESPONSE_FORMAT_ERROR = 'Unable to parse the response from the captcha API';
 
@@ -58,6 +58,7 @@ const proveHumanity = async (page: Page) => {
       throw new Error(e);
     }
     
+
     if (captchaAnswerStr !== CAPTCHA_NOT_READY_ERROR_MSG) {
       // enter the captch answer on the web page
       await page.waitForSelector(CAPTCHA_TEXT_FIELD_ID);
