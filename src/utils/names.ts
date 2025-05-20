@@ -127,7 +127,8 @@ const boyNames: string[] = [
   'Trevon',
   'Maurice',
   'Jalen',
-  'Darryl'
+  'Darryl',
+  'Curtis'
 ];
 
 const girlNames = [
