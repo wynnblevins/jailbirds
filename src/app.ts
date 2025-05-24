@@ -9,7 +9,6 @@ const {
   findAllJailbirds,
   deleteOldJailbirdsFromFacility,
 } = require("./services/jailbirdService");
-import executeWithRetries from './services/executeWithRetriesService/executeWithRetriesService';
 import { buildJailbirds as buildHenricoJailbirds } from './services/henricoScraper/henricoScraperService';
 import { buildJailbirds as buildRichmondJailbirds } from './services/richmondScraper/richmondScraperService';
 const { postBatchToInsta, postJailbirdById } = require('./services/instagramPoster/instagramPostService');

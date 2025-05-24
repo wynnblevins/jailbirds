@@ -1,7 +1,7 @@
 import { Jailbird } from "../../app";
 const {
   findJailbirdByInmateId
-} = require("./jailbirdService");
+} = require("../jailbirdService");
 
 const asyncFilter = async (arr, predicate) => {
   const results = await Promise.all(arr.map(predicate));
