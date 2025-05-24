@@ -71,7 +71,7 @@ export const buildJailbirds = async (): Promise<Jailbird[]> => {
     page = await browser.newPage();
     await page.goto(inmatesPageURL, {
       waitUntil: 'load',
-      timeout: 10000,
+      timeout: 20000,
     });
   } catch (e: any) {
     browser.close();

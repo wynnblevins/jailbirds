@@ -14,87 +14,92 @@ const { logMessage } = require('../loggerService');
 export const buildJailbirds = async (): Promise<Jailbird[]> => {
   let firstNameBrowser = null, lastNameBrowser = null;
   
-  try {
-    return executeWithRetries(async () => {
-      // We'll do first and last name searches in parallel
-      logMessage('Launching headless browsers for Richmond page.', JAILS.RICHMOND_CITY_JAIL)
-      firstNameBrowser = await launchBrowser();
-      lastNameBrowser = await launchBrowser();
+  const myPromise = new Promise<Jailbird[]>((resolve, reject) => {
+    try {
+      executeWithRetries(async () => {
+        // We'll do first and last name searches in parallel
+        logMessage('Launching headless browsers for Richmond page.', JAILS.RICHMOND_CITY_JAIL)
+        firstNameBrowser = await launchBrowser();
+        lastNameBrowser = await launchBrowser();
 
-      // go to the Richmond inmates page
-      logMessage(
-        `Going to ${JAIL_URLS.RICHMOND_CITY_JAIL}`, JAILS.RICHMOND_CITY_JAIL
-      );
-      const firstNamePage = await firstNameBrowser.newPage();
-      const lastNamePage = await lastNameBrowser.newPage();
+        // go to the Richmond inmates page
+        logMessage(
+          `Going to ${JAIL_URLS.RICHMOND_CITY_JAIL}`, JAILS.RICHMOND_CITY_JAIL
+        );
+        const firstNamePage = await firstNameBrowser.newPage();
+        const lastNamePage = await lastNameBrowser.newPage();
 
-      logMessage(
-        `Loading page at ${JAIL_URLS.RICHMOND_CITY_JAIL} for first name searches`, 
-        JAILS.RICHMOND_CITY_JAIL
-      );
-      const firstNamePageLoadPromise = loadPage(firstNamePage);
-      logMessage(
-        `Loading page at ${JAIL_URLS.RICHMOND_CITY_JAIL} for last name searches`,
-        JAILS.RICHMOND_CITY_JAIL
-      );
-      const lastNamePageLoadPromise = loadPage(lastNamePage);
-      const pageLoadPromises = [
-        firstNamePageLoadPromise, 
-        lastNamePageLoadPromise
-      ];
-      await Promise.all(pageLoadPromises);
+        logMessage(
+          `Loading page at ${JAIL_URLS.RICHMOND_CITY_JAIL} for first name searches`, 
+          JAILS.RICHMOND_CITY_JAIL
+        );
+        const firstNamePageLoadPromise = loadPage(firstNamePage);
+        logMessage(
+          `Loading page at ${JAIL_URLS.RICHMOND_CITY_JAIL} for last name searches`,
+          JAILS.RICHMOND_CITY_JAIL
+        );
+        const lastNamePageLoadPromise = loadPage(lastNamePage);
+        const pageLoadPromises = [
+          firstNamePageLoadPromise, 
+          lastNamePageLoadPromise
+        ];
+        await Promise.all(pageLoadPromises);
 
-      logMessage(`Proving humanity`, JAILS.RICHMOND_CITY_JAIL);
-      const firstNamePageHumanityPromise = proveHumanity(firstNamePage);
-      const lastNamePageHumanityPromise = proveHumanity(lastNamePage);
-      const humanityPromises = [firstNamePageHumanityPromise, lastNamePageHumanityPromise];
-      await Promise.all(humanityPromises);
+        logMessage(`Proving humanity`, JAILS.RICHMOND_CITY_JAIL);
+        const firstNamePageHumanityPromise = proveHumanity(firstNamePage);
+        const lastNamePageHumanityPromise = proveHumanity(lastNamePage);
+        const humanityPromises = [firstNamePageHumanityPromise, lastNamePageHumanityPromise];
+        await Promise.all(humanityPromises);
 
-      logMessage(`Doing first name searches`, JAILS.RICHMOND_CITY_JAIL);
-      const FIRST_NAME_SEARCH_BOX_ID = "#searchFirstName";
-      const firstNames = getFirstNames();
-      await firstNamePage.bringToFront();
-      const firstNameJBPromise: Promise<Jailbird[]> = doJBSearches(
-        firstNamePage, 
-        firstNames, 
-        FIRST_NAME_SEARCH_BOX_ID
-      );  
+        logMessage(`Doing first name searches`, JAILS.RICHMOND_CITY_JAIL);
+        const FIRST_NAME_SEARCH_BOX_ID = "#searchFirstName";
+        const firstNames = getFirstNames();
+        await firstNamePage.bringToFront();
+        const firstNameJBPromise: Promise<Jailbird[]> = doJBSearches(
+          firstNamePage, 
+          firstNames, 
+          FIRST_NAME_SEARCH_BOX_ID
+        );  
 
-      logMessage(`Doing last name searches`, JAILS.RICHMOND_CITY_JAIL);
-      const LAST_NAME_SEARCH_BOX_ID = "#searchLastName";
-      const lastNames = getLastNames();
-      await lastNamePage.bringToFront();
-      const lastNameJBPromise: Promise<Jailbird[]> = doJBSearches(
-        lastNamePage, 
-        lastNames, 
-        LAST_NAME_SEARCH_BOX_ID
-      );  
+        logMessage(`Doing last name searches`, JAILS.RICHMOND_CITY_JAIL);
+        const LAST_NAME_SEARCH_BOX_ID = "#searchLastName";
+        const lastNames = getLastNames();
+        await lastNamePage.bringToFront();
+        const lastNameJBPromise: Promise<Jailbird[]> = doJBSearches(
+          lastNamePage, 
+          lastNames, 
+          LAST_NAME_SEARCH_BOX_ID
+        );  
       
-      const scraperPromises: Promise<any>[] = [];
-      scraperPromises.push(firstNameJBPromise);
-      scraperPromises.push(lastNameJBPromise);
-      const resolvedData = await Promise.all(scraperPromises);
+        const scraperPromises: Promise<any>[] = [];
+        scraperPromises.push(firstNameJBPromise);
+        scraperPromises.push(lastNameJBPromise);
+        const resolvedData = await Promise.all(scraperPromises);
 
-      logMessage(`Closing headless browsers`, JAILS.RICHMOND_CITY_JAIL);
+        logMessage(`Closing headless browsers`, JAILS.RICHMOND_CITY_JAIL);
+        firstNameBrowser.close();
+        lastNameBrowser.close();
+
+        const flattenedData = resolvedData.flat(1);
+        logMessage(
+          `Returning ${flattenedData.length} jailbirds from scraper service`,
+          JAILS.RICHMOND_CITY_JAIL
+        );
+        resolve(flattenedData);
+      });
+      
+    } catch (e: any) {
+      logMessage(
+        `Error encounted while building Jailbirds list, ${e}`, 
+        JAILS.RICHMOND_CITY_JAIL
+      );
       firstNameBrowser.close();
       lastNameBrowser.close();
-
-      const flattenedData = resolvedData.flat(1);
-      logMessage(
-        `Returning ${flattenedData.length} jailbirds from scraper service`,
-        JAILS.RICHMOND_CITY_JAIL
-      );
-      return flattenedData;
-    });
-  } catch (e: any) {
-    logMessage(
-      `Error encounted while building Jailbirds list, ${e}`, 
-      JAILS.RICHMOND_CITY_JAIL
-    );
-    firstNameBrowser.close();
-    lastNameBrowser.close();
-    throw new Error(`Error encounted while building Jailbirds list, ${e}`);
-  } 
+      throw new Error(`Error encounted while building Jailbirds list, ${e}`);
+    }
+  });
+  
+  return myPromise;
 };
 
 const loadPage = async (page) => {

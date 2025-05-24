@@ -151,7 +151,7 @@ const performBatchPost = async () => {
   }
 
   // remaining jbs in DB will be what we want to post to instagram, do that here
-  await postBatchToInsta();
+  return await postBatchToInsta();
 };
 
 // check if we are performing the nightly batch or a manual run
@@ -164,7 +164,7 @@ if (argv.m) {
       process.exit();
     }).catch((e) => {
       logMessage(`Program encountered error while performing manual post: ${e}`);
-      process.exit();
+      process.exit(1);
     });
   } else {
     performBatchPost().then(() => {
@@ -172,12 +172,12 @@ if (argv.m) {
       process.exit();
     }).catch((e) => {
       logMessage(`Program encountered error: ${e}`);
-      process.exit();
+      process.exit(1);
     });
   }
 } else {
   // if not running in manual mode, start the cron job
-  cron.schedule('0 16 * * *', () => {
+  cron.schedule('30 18 * * *', () => {
     performBatchPost().then(() => {
       logMessage('Program complete, stopping execution.');
     }).catch((e) => {
