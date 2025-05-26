@@ -8,7 +8,8 @@
     "build": "node_modules/typescript/bin/tsc && mkdir -p out/images",
     "start": "node out/app.js",
     "startManualBatch": "node out/app.js -m",
-    "manuallyPost": "node out/app.js -m -i ${0}"
+    "manuallyPost": "node out/app.js -m -i ${0}",
+    "clean": "rm -rf out/api && rm -rf out/models && rm -rf out/services && rm -rf out/testUtils && rm -rf out/utils && rm -rf out/app.js && rm -rf app.js.map"
   },
   "author": "",
   "license": "ISC",
