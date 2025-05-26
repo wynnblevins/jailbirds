@@ -176,12 +176,16 @@ if (argv.m) {
     });
   }
 } else {
+  logMessage('Starting cron job.')
+  
   // if not running in manual mode, start the cron job
-  cron.schedule('30 18 * * *', () => {
+  cron.schedule('10 14 * * *', () => {
     performBatchPost().then(() => {
       logMessage('Program complete, stopping execution.');
+      process.exit();
     }).catch((e) => {
       logMessage(`Program encountered error: ${e}`);
+      process.exit(1);
     });
   });  
 }
