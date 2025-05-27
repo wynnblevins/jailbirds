@@ -6,6 +6,7 @@ import executeWithRetries from "../executeWithRetriesService/executeWithRetriesS
 import { clickButton, focusOn, typeInField } from "../pageInteractions";
 import scrapeTable from "./richmondTableScraperService";
 import { proveHumanity } from "../captchaService/capchaService";
+import { delayMs } from "../delayService";
 const { getRandNumInRange } = require('../randomNumberService');
 const { getFirstNames, getLastNames } = require('../../utils/names');
 const config = require('../../utils/environment');
@@ -19,8 +20,8 @@ export const buildJailbirds = async (): Promise<Jailbird[]> => {
       executeWithRetries(async () => {
         // We'll do first and last name searches in parallel
         logMessage('Launching headless browsers for Richmond page.', JAILS.RICHMOND_CITY_JAIL)
-        firstNameBrowser = await launchBrowser();
-        lastNameBrowser = await launchBrowser();
+        firstNameBrowser = await launchBrowser(false);
+        lastNameBrowser = await launchBrowser(false);
 
         // go to the Richmond inmates page
         logMessage(
@@ -181,7 +182,7 @@ const doSearch = async (page: Page, name: string, searchBoxID: string): Promise<
         `Doing a search for the name ${name}`, 
         JAILS.RICHMOND_CITY_JAIL
       );
-      await typeInField(page, searchBoxID, name, true)
+      await typeInField(page, searchBoxID, name, true);
     });
   } catch (e: any) {
     throw new Error(e);
@@ -195,6 +196,7 @@ const doSearch = async (page: Page, name: string, searchBoxID: string): Promise<
         JAILS.RICHMOND_CITY_JAIL
       );
       await clickButton(page, SEARCH_BTN_SELECTOR);
+      await page.waitForNetworkIdle();
     });
   } catch (e: any) {
     throw new Error(e);
@@ -209,7 +211,7 @@ const doSearch = async (page: Page, name: string, searchBoxID: string): Promise<
     // the search button matches the .btn.btn-primary class
     // so start looping at 2nd button and view each jailbird's individual page
     for (let i = 1; i < viewMoreBtns.length; i++) {
-      // expand the jailbird details accordion (by clicking "view more" button)
+      // expand the jailbird details accordion by clicking "view more" button
       await viewMoreBtns[i].click();
       
       try {
@@ -233,6 +235,8 @@ const doSearch = async (page: Page, name: string, searchBoxID: string): Promise<
           await viewLessBtns[0].click();
         }
       }
+
+      await page.waitForNetworkIdle();
     }
   }
   
@@ -387,8 +391,8 @@ const buildChargesStr = async (charges): Promise<string> => {
 
   // append the charges into one long string
   for (let charge in chargesMap) {
-    if (charges[charge] > 1) {
-      chargesStr += `${charge} (x${charges[charge]}), `;
+    if (chargesMap[charge] > 1) {
+      chargesStr += `${charge} (x${chargesMap[charge]}), `;
     } else {
       chargesStr += `${charge}, `;
     }
