@@ -231,9 +231,7 @@ const doSearch = async (page: Page, name: string, searchBoxID: string): Promise<
         logMessage(`Error encountered while building jailbird, ${e}`);
       } finally {
         const viewLessBtns = await getButtonsByText(page, "View Less");
-        if (viewLessBtns[0]) {
-          await viewLessBtns[0].click();
-        }
+        await viewLessBtns[0]?.click();
       }
 
       await page.waitForNetworkIdle();
