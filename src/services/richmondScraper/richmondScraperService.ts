@@ -249,7 +249,6 @@ const doSearch = async (page: Page, name: string, searchBoxID: string): Promise<
 
 const buildJailbird = async (page): Promise<Jailbird> => {
   let jailbird: Jailbird = null;
-  const RICHMOND_CITY_JAIL = 'RICHMOND CITY JAIL';
 
   // scrape table data which contains jailbird details
   const tableData = await scrapeTable(page);
@@ -284,7 +283,7 @@ const buildJailbird = async (page): Promise<Jailbird> => {
         inmateID: inmateId,
         name: name,
         picture: picture,
-        facility: RICHMOND_CITY_JAIL,
+        facility: JAILS.RICHMOND_CITY_JAIL,
         age: age,
         timestamp: new Date(),
         isPosted: false,
