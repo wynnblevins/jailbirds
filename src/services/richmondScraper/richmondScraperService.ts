@@ -296,7 +296,7 @@ const buildJailbird = async (page): Promise<Jailbird> => {
     const picture = imgs[0];
 
     // write the base64 string to a local image for later uploads
-    if (picture && charges) {
+    if (picture && charges && name) {
       // construct jailbird from scraped information
       jailbird = {
         charges: charges,
