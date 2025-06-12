@@ -121,6 +121,20 @@ const getRandomSubset = (arr, size) => {
   return shuffled.slice(0, size);
 }
 
+const waitUntilElWithTextIsHidden = async (
+  page, selector, text, timeout = 5000
+) => {  
+  await page.waitForFunction(
+    (selector, text) => {
+      const elements = Array.from(document.querySelectorAll(selector));
+      return !elements.some(el => el.textContent?.trim() === text);
+    },
+    { timeout },
+    selector,
+    text
+  );
+};
+
 const doJBSearches = async (page: Page, names: string[], searchFieldID: string): Promise<Jailbird[]> => {
   let webpageJailbirds: Jailbird[] = [];
   
@@ -229,9 +243,17 @@ const doSearch = async (page: Page, name: string, searchBoxID: string): Promise<
         }
       } catch (e:any) {
         logMessage(`Error encountered while building jailbird, ${e}`);
-      } finally {
-        const viewLessBtns = await getButtonsByText(page, "View Less");
-        await viewLessBtns[0]?.click();
+      }finally {
+        const VIEW_LESS_STR = "View Less";
+        const viewLessBtns = await getButtonsByText(page, VIEW_LESS_STR);
+        if (viewLessBtns.length > 0) {
+          await viewLessBtns[0].click();
+
+          // Wait until "View Less" disappears (and "View More" replaces it)
+          await waitUntilElWithTextIsHidden(page, "button", VIEW_LESS_STR);
+        } else {
+          logMessage("No 'View Less' button found to collapse accordion");
+        }
       }
 
       await page.waitForNetworkIdle();
@@ -274,7 +296,7 @@ const buildJailbird = async (page): Promise<Jailbird> => {
     const picture = imgs[0];
 
     // write the base64 string to a local image for later uploads
-    if (picture) {
+    if (picture && charges) {
       // construct jailbird from scraped information
       jailbird = {
         charges: charges,
