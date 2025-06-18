@@ -85,7 +85,7 @@ const filterBoringJailbirds = (jailbirds: Jailbird[], boringCharge: string) => {
 };
 
 
-module.exports = { 
+export { 
   filterBoringJailbirds, 
   filterPostedJailbirds, 
   filterSavedJailbirds 

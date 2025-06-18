@@ -1,9 +1,9 @@
 import { Jailbird } from "../../app";
-const { createDummyJailbird } = require('../testUtils/mockDataGenerator');
-const { 
+import { createDummyJailbird } from "../../testUtils/mockDataGenerator";
+import { 
   filterSavedJailbirds,
   filterBoringJailbirds
-} = require('./jailbirdFilterService')
+} from './jailbirdFilterService'
 
 describe('jailbirdFilterService', () => {
   let dummyJailbird0;

@@ -221,13 +221,18 @@ const doSearch = async (page: Page, name: string, searchBoxID: string): Promise<
   let viewMoreBtns = await getViewButtons(page);
 
   // there's the possibility there wont be any results for any given name
-  if (viewMoreBtns.length > 1) {
+  if (viewMoreBtns.length > 0) {
     // the search button matches the .btn.btn-primary class
     // so start looping at 2nd button and view each jailbird's individual page
     for (let i = 1; i < viewMoreBtns.length; i++) {
       // expand the jailbird details accordion by clicking "view more" button
       await viewMoreBtns[i].click();
       
+      const viewLessBtns = await getButtonsByText(page, "View Less");
+      if (viewLessBtns?.length > 1) {
+        throw new Error("View Less button failed to close accordion.");
+      }
+
       try {
         // wait for offender details to be displayed
         await page.waitForSelector(OFFENDER_DETAILS_ID);

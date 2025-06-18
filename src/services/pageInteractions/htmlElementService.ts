@@ -24,6 +24,26 @@ const getHTMLElement = async (
   }
 }
 
+/**
+ * Gets all button elements on the page that match the specified text content.
+ * @param page - The Puppeteer Page instance.
+ * @param buttonText - The text content to match (case-sensitive exact match).
+ * @returns An array of element handles to the matching buttons.
+ */
+export async function getButtonsByText(page: Page, buttonText: string): Promise<ElementHandle<HTMLButtonElement>[]> {
+  const handles = await page.$$('button');
+  const matchingHandles: ElementHandle<HTMLButtonElement>[] = [];
+
+  for (const handle of handles) {
+    const text = await page.evaluate(el => el.textContent?.trim(), handle);
+    if (text === buttonText) {
+      matchingHandles.push(handle as ElementHandle<HTMLButtonElement>);
+    }
+  }
+
+  return matchingHandles;
+}
+
 export { 
   getHTMLElement 
 };
