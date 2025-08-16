@@ -48,18 +48,40 @@ const scrapeWebpages = async (): Promise<Jailbird[]> => {
     "Scraping Richmond jailbird web page...", 
     JAILS.RICHMOND_CITY_JAIL
   );
-  const richmondJbsPromise = buildRichmondJailbirds();
-  scraperPromises.push(richmondJbsPromise);
+
+  try {
+    const richmondJbsPromise = buildRichmondJailbirds();
+    scraperPromises.push(richmondJbsPromise);
+  } catch (e: any) {
+    logMessage(
+      "Error encountered while building Richmond jailbirds", 
+      JAILS.RICHMOND_CITY_JAIL
+    );
+  }
 
   // scrape the Henrico jail roster webpage
   logMessage(
     "Scraping Henrico jailbird web page...", 
     JAILS.HENRICO_COUNTY_REGIONAL_JAIL
   );
-  const henricoJbsPromise = buildHenricoJailbirds();
-  scraperPromises.push(henricoJbsPromise);
 
-  const resolvedData = await Promise.all(scraperPromises);
+  try {
+    const henricoJbsPromise = buildHenricoJailbirds();
+    scraperPromises.push(henricoJbsPromise);
+  } catch (e: any) {
+    logMessage(
+      "Error encountered while building Henrico jailbirds", 
+      JAILS.HENRICO_COUNTY_REGIONAL_JAIL
+    );
+  }
+  
+  let resolvedData = [];
+  try {
+    resolvedData = await Promise.all(scraperPromises);
+  } catch (e: any) {
+    throw new Error('Error encountered while waiting for promises to resolve.');
+  }
+  
   return resolvedData.flat(1);
 };
 

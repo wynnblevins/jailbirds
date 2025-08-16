@@ -2,11 +2,10 @@ import { Page } from "puppeteer";
 import { Jailbird } from "../../app";
 import { JAILS, JAIL_URLS } from "../../utils/strings";
 import { launchBrowser } from "../browserLaunchService/browserLauncherService";
-import executeWithRetries from "../executeWithRetriesService/executeWithRetriesService";
 import { clickButton, focusOn, typeInField } from "../pageInteractions";
 import scrapeTable from "./richmondTableScraperService";
 import { proveHumanity } from "../captchaService/capchaService";
-import { delayMs } from "../delayService";
+import buildJailbird from "./richmondJailbirdFactory";
 const { getRandNumInRange } = require('../randomNumberService');
 const { getFirstNames, getLastNames } = require('../../utils/names');
 const config = require('../../utils/environment');
@@ -15,80 +14,77 @@ const { logMessage } = require('../loggerService');
 export const buildJailbirds = async (): Promise<Jailbird[]> => {
   let firstNameBrowser = null, lastNameBrowser = null;
   
-  const myPromise = new Promise<Jailbird[]>((resolve, reject) => {
+  const jailbirdsPromise = new Promise<Jailbird[]>(async (resolve, reject) => {
     try {
-      executeWithRetries(async () => {
-        // We'll do first and last name searches in parallel
-        logMessage('Launching headless browsers for Richmond page.', JAILS.RICHMOND_CITY_JAIL)
-        firstNameBrowser = await launchBrowser(false);
-        lastNameBrowser = await launchBrowser(false);
+      // We'll do first and last name searches in parallel
+      logMessage('Launching headless browsers for Richmond page.', JAILS.RICHMOND_CITY_JAIL)
+      firstNameBrowser = await launchBrowser(false);
+      lastNameBrowser = await launchBrowser(false);
 
-        // go to the Richmond inmates page
-        logMessage(
-          `Going to ${JAIL_URLS.RICHMOND_CITY_JAIL}`, JAILS.RICHMOND_CITY_JAIL
-        );
-        const firstNamePage = await firstNameBrowser.newPage();
-        const lastNamePage = await lastNameBrowser.newPage();
+      // go to the Richmond inmates page
+      logMessage(
+        `Going to ${JAIL_URLS.RICHMOND_CITY_JAIL}`, JAILS.RICHMOND_CITY_JAIL
+      );
+      const firstNamePage = await firstNameBrowser.newPage();
+      const lastNamePage = await lastNameBrowser.newPage();
 
-        logMessage(
-          `Loading page at ${JAIL_URLS.RICHMOND_CITY_JAIL} for first name searches`, 
-          JAILS.RICHMOND_CITY_JAIL
-        );
-        const firstNamePageLoadPromise = loadPage(firstNamePage);
-        logMessage(
-          `Loading page at ${JAIL_URLS.RICHMOND_CITY_JAIL} for last name searches`,
-          JAILS.RICHMOND_CITY_JAIL
-        );
-        const lastNamePageLoadPromise = loadPage(lastNamePage);
-        const pageLoadPromises = [
-          firstNamePageLoadPromise, 
-          lastNamePageLoadPromise
-        ];
-        await Promise.all(pageLoadPromises);
+      logMessage(
+        `Loading page at ${JAIL_URLS.RICHMOND_CITY_JAIL} for first name searches`, 
+        JAILS.RICHMOND_CITY_JAIL
+      );
+      const firstNamePageLoadPromise = loadPage(firstNamePage);
+      logMessage(
+        `Loading page at ${JAIL_URLS.RICHMOND_CITY_JAIL} for last name searches`,
+        JAILS.RICHMOND_CITY_JAIL
+      );
+      const lastNamePageLoadPromise = loadPage(lastNamePage);
+      const pageLoadPromises = [
+        firstNamePageLoadPromise, 
+        lastNamePageLoadPromise
+      ];
+      await Promise.all(pageLoadPromises);
 
-        logMessage(`Proving humanity`, JAILS.RICHMOND_CITY_JAIL);
-        const firstNamePageHumanityPromise = proveHumanity(firstNamePage);
-        const lastNamePageHumanityPromise = proveHumanity(lastNamePage);
-        const humanityPromises = [firstNamePageHumanityPromise, lastNamePageHumanityPromise];
-        await Promise.all(humanityPromises);
+      logMessage(`Proving humanity`, JAILS.RICHMOND_CITY_JAIL);
+      const firstNamePageHumanityPromise = proveHumanity(firstNamePage);
+      const lastNamePageHumanityPromise = proveHumanity(lastNamePage);
+      const humanityPromises = [firstNamePageHumanityPromise, lastNamePageHumanityPromise];
+      await Promise.all(humanityPromises);
 
-        logMessage(`Doing first name searches`, JAILS.RICHMOND_CITY_JAIL);
-        const FIRST_NAME_SEARCH_BOX_ID = "#searchFirstName";
-        const firstNames = getFirstNames();
-        await firstNamePage.bringToFront();
-        const firstNameJBPromise: Promise<Jailbird[]> = doJBSearches(
-          firstNamePage, 
-          firstNames, 
-          FIRST_NAME_SEARCH_BOX_ID
-        );  
+      logMessage(`Doing first name searches`, JAILS.RICHMOND_CITY_JAIL);
+      const FIRST_NAME_SEARCH_BOX_ID = "#searchFirstName";
+      const firstNames = getFirstNames();
+      await firstNamePage.bringToFront();
+      const firstNameJBPromise: Promise<Jailbird[]> = doJBSearches(
+        firstNamePage, 
+        firstNames, 
+        FIRST_NAME_SEARCH_BOX_ID
+      );  
 
-        logMessage(`Doing last name searches`, JAILS.RICHMOND_CITY_JAIL);
-        const LAST_NAME_SEARCH_BOX_ID = "#searchLastName";
-        const lastNames = getLastNames();
-        await lastNamePage.bringToFront();
-        const lastNameJBPromise: Promise<Jailbird[]> = doJBSearches(
-          lastNamePage, 
-          lastNames, 
-          LAST_NAME_SEARCH_BOX_ID
-        );  
-      
-        const scraperPromises: Promise<any>[] = [];
-        scraperPromises.push(firstNameJBPromise);
-        scraperPromises.push(lastNameJBPromise);
-        const resolvedData = await Promise.all(scraperPromises);
+      logMessage(`Doing last name searches`, JAILS.RICHMOND_CITY_JAIL);
+      const LAST_NAME_SEARCH_BOX_ID = "#searchLastName";
+      const lastNames = getLastNames();
+      await lastNamePage.bringToFront();
+      const lastNameJBPromise: Promise<Jailbird[]> = doJBSearches(
+        lastNamePage, 
+        lastNames, 
+        LAST_NAME_SEARCH_BOX_ID
+      );  
+    
+      const scraperPromises: Promise<any>[] = [];
+      scraperPromises.push(firstNameJBPromise);
+      scraperPromises.push(lastNameJBPromise);
+      const resolvedData = await Promise.all(scraperPromises);
 
-        logMessage(`Closing headless browsers`, JAILS.RICHMOND_CITY_JAIL);
-        firstNameBrowser.close();
-        lastNameBrowser.close();
+      logMessage(`Closing headless browsers`, JAILS.RICHMOND_CITY_JAIL);
+      firstNameBrowser.close();
+      lastNameBrowser.close();
 
-        const flattenedData = resolvedData.flat(1);
-        logMessage(
-          `Returning ${flattenedData.length} jailbirds from scraper service`,
-          JAILS.RICHMOND_CITY_JAIL
-        );
-        resolve(flattenedData);
-      });
-      
+      const flattenedData = resolvedData.flat(1);
+      logMessage(
+        `Returning ${flattenedData.length} jailbirds from scraper service`,
+        JAILS.RICHMOND_CITY_JAIL
+      );
+      resolve(flattenedData);
     } catch (e: any) {
       logMessage(
         `Error encounted while building Jailbirds list, ${e}`, 
@@ -96,11 +92,11 @@ export const buildJailbirds = async (): Promise<Jailbird[]> => {
       );
       firstNameBrowser.close();
       lastNameBrowser.close();
-      throw new Error(`Error encounted while building Jailbirds list, ${e}`);
+      reject();
     }
   });
   
-  return myPromise;
+  return jailbirdsPromise;
 };
 
 const loadPage = async (page) => {
@@ -149,13 +145,19 @@ const doJBSearches = async (page: Page, names: string[], searchFieldID: string):
     JAILS.RICHMOND_CITY_JAIL
   );
   for (let i = 0; i < namesSubset.length; i++) {
-    const jailbirds: Jailbird[] = await doSearch(
-      page, 
-      namesSubset[i], 
-      searchFieldID
-    );
-    if (jailbirds?.length) {
-      webpageJailbirds = [...webpageJailbirds, ...jailbirds];
+    try {
+      const jailbirds: Jailbird[] = await doSearch(
+        page, 
+        namesSubset[i], 
+        searchFieldID
+      );
+      if (jailbirds?.length) {
+        webpageJailbirds = [...webpageJailbirds, ...jailbirds];
+      }
+    } catch (e: any) {
+      const ERR_MSG = "Error encounted while doing jailbird searches";
+      logMessage(ERR_MSG, JAILS.RICHMOND_CITY_JAIL);
+      throw new Error(ERR_MSG);
     }
   }
 
@@ -178,40 +180,34 @@ const doSearch = async (page: Page, name: string, searchBoxID: string): Promise<
   const SEARCH_BTN_SELECTOR = '.form-group.btn.btn-primary';
 
   try {
-    await executeWithRetries(async () => {
-      logMessage(
-        `Putting browser focus on first name search box to search for the name ${name}`,
-        JAILS.RICHMOND_CITY_JAIL
-      );
-      await focusOn(page, searchBoxID);
-    });
+    logMessage(
+      `Putting browser focus on first name search box to search for the name ${name}`,
+      JAILS.RICHMOND_CITY_JAIL
+    );
+    await focusOn(page, searchBoxID);
   } catch (e: any) {
     throw new Error(e);
   }
 
   // type the given name into the first name search box
   try {
-    await executeWithRetries(async () => {
-      logMessage(
-        `Doing a search for the name ${name}`, 
-        JAILS.RICHMOND_CITY_JAIL
-      );
-      await typeInField(page, searchBoxID, name, true);
-    });
+    logMessage(
+      `Doing a search for the name ${name}`, 
+      JAILS.RICHMOND_CITY_JAIL
+    );
+    await typeInField(page, searchBoxID, name, true);
   } catch (e: any) {
     throw new Error(e);
   }
   
   // find and click the search button
   try {
-    await executeWithRetries(async () => {
-      logMessage(
-        `Clicking the search button for the name ${name}`, 
-        JAILS.RICHMOND_CITY_JAIL
-      );
-      await clickButton(page, SEARCH_BTN_SELECTOR);
-      await page.waitForNetworkIdle();
-    });
+    logMessage(
+      `Clicking the search button for the name ${name}`, 
+      JAILS.RICHMOND_CITY_JAIL
+    );
+    await clickButton(page, SEARCH_BTN_SELECTOR);
+    await page.waitForNetworkIdle();
   } catch (e: any) {
     throw new Error(e);
   }
@@ -248,7 +244,7 @@ const doSearch = async (page: Page, name: string, searchBoxID: string): Promise<
         }
       } catch (e:any) {
         logMessage(`Error encountered while building jailbird, ${e}`);
-      }finally {
+      } finally {
         const VIEW_LESS_STR = "View Less";
         const viewLessBtns = await getButtonsByText(page, VIEW_LESS_STR);
         if (viewLessBtns.length > 0) {
@@ -257,7 +253,10 @@ const doSearch = async (page: Page, name: string, searchBoxID: string): Promise<
           // Wait until "View Less" disappears (and "View More" replaces it)
           await waitUntilElWithTextIsHidden(page, "button", VIEW_LESS_STR);
         } else {
-          logMessage("No 'View Less' button found to collapse accordion");
+          logMessage(
+            "No 'View Less' button found to collapse accordion",
+            JAILS.RICHMOND_CITY_JAIL
+          );
         }
       }
 
@@ -271,59 +270,6 @@ const doSearch = async (page: Page, name: string, searchBoxID: string): Promise<
   );
   return webpageJailbirds;
 };
-
-const buildJailbird = async (page): Promise<Jailbird> => {
-  let jailbird: Jailbird = null;
-
-  // scrape table data which contains jailbird details
-  const tableData = await scrapeTable(page);
-
-  if (tableData) {
-    const TABLE_DATA_JB_LENGTH = 7; // each jb row has a length of 7 table cols
-    const startNdx = getFirstColNdx(tableData);
-    const tableRowData = tableData.slice(startNdx, startNdx + TABLE_DATA_JB_LENGTH)
-    const name: string = buildNameStr(tableRowData);
-    const inmateId = getInmateIdStr(tableRowData);
-
-    // build out charge strings for jailbird
-    const chargesArr: string[] = await page.$$('.col-12.table.table-striped.table-hover > h5', (h5s) =>
-      h5s.map((h5) => {
-          return h5.innerText;
-      })
-    );
-    const charges: string = await buildChargesStr(chargesArr);
-    
-    // get jailbird age
-    const age = getAge(tableData);
-
-    // get jailbird mugshot
-    const imgs = await page.$$eval('img.img-thumbnail[src]', imgs => imgs.map(img => img.getAttribute('src')));
-    const picture = imgs[0];
-
-    // write the base64 string to a local image for later uploads
-    if (picture && charges && name) {
-      // construct jailbird from scraped information
-      jailbird = {
-        charges: charges,
-        inmateID: inmateId,
-        name: name,
-        picture: picture,
-        facility: JAILS.RICHMOND_CITY_JAIL,
-        age: age,
-        timestamp: new Date(),
-        isPosted: false,
-        hashtags: [
-          '#jail',
-          '#jailbirds',
-          '#rva',
-          '#mugshots',
-        ]
-      };
-    }
-  }
-
-  return jailbird;
-}
 
 /**
  * There seems to be a timing issue.  This function gets the first 
@@ -378,61 +324,4 @@ const getViewButtons = async (page) => {
   const viewButtonsSelector = '.btn.btn-primary';
   const viewButtons = await page.$$(viewButtonsSelector);
   return viewButtons;
-};
-
-const buildNameStr = (jailbirdData: string[]): string => {
-  const LAST_NAME_NDX = 1;
-  const FIRST_NAME_NDX = 2;
-  const MIDDLE_NAME_NDX = 3;
-
-  const lastName = jailbirdData[LAST_NAME_NDX];
-  const firstName = jailbirdData[FIRST_NAME_NDX];
-  const middleName = jailbirdData[MIDDLE_NAME_NDX];
-
-  return `${firstName} ${middleName} ${lastName}`;
-};
-
-const getInmateIdStr = (jailbirdData: string[]): string => {
-  const INMATE_ID_NDX = 6;
-  return jailbirdData[INMATE_ID_NDX];
-};
-
-const buildChargesStr = async (charges): Promise<string> => {
-  let chargesStr = '';
-  const chargesMap = {};
-
-  // build a map of the current inmate's charges and their counts
-  for (let i = 0; i < charges.length; i++) {
-    const charge = charges[i];
-    let chargeHandle = await charge.getProperty('innerText');
-    let chargeText = await chargeHandle.jsonValue();
-    if (chargesMap.hasOwnProperty(chargeText)) {
-      chargesMap[chargeText]++; 
-    } else {
-      chargesMap[chargeText] = 1;
-    }
-  }
-
-  // append the charges into one long string
-  for (let charge in chargesMap) {
-    if (chargesMap[charge] > 1) {
-      chargesStr += `${charge} (x${chargesMap[charge]}), `;
-    } else {
-      chargesStr += `${charge}, `;
-    }
-  }
-
-  if (chargesStr.endsWith(', ')) {
-    chargesStr = chargesStr.slice(0, -2); 
-  }
-  
-  return chargesStr;
-};
-
-const getAge = (jailbirdData: string[]): number => {
-  const CURRENT_AGE_LABEL = 'Current Age:';
-  const CURRENT_AGE_LABEL_NDX = jailbirdData.indexOf(CURRENT_AGE_LABEL);
-  const CURRENT_AGE_NDX = CURRENT_AGE_LABEL_NDX + 1;
-  const age = jailbirdData[CURRENT_AGE_NDX];
-  return parseInt(age);
 };
