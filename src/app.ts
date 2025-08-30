@@ -10,11 +10,7 @@ const {
 import { buildJailbirds as buildHenricoJailbirds } from './services/henricoScraper/henricoScraperService';
 import { buildJailbirds as buildRichmondJailbirds } from './services/richmondScraper/richmondScraperService';
 const { postBatchToInsta, postJailbirdById } = require('./services/instagramPoster/instagramPostService');
-const { 
-  filterSavedJailbirds, 
-  filterBoringJailbirds 
-} = require('./services/jailbirdFilterService');
-const { logMessage } = require('./services/loggerService');
+import { logMessage } from './services/loggerService';
 import { Types } from 'mongoose';
 
 interface Jailbird {
@@ -116,7 +112,7 @@ const pruneDB = async () => {
  * instagram posts based on what is configured in the env file
  */
 const performBatchPost = async () => {
-  // to keep from running out of database space, get rid of old jailbirds
+  // to keep from running out of database space (free tier plan ftw), get rid of old jailbirds
   pruneDB();
 
   // scrape the jail webpages and update the database
@@ -127,7 +123,7 @@ const performBatchPost = async () => {
   }
 
   // remaining jbs in DB will be what we want to post to instagram, do that here
-  // return await postBatchToInsta();
+  return await postBatchToInsta();
 };
 
 // check if we are performing the nightly batch or a manual run
