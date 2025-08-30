@@ -19,9 +19,21 @@ const findUnpostedJailbirds = async (): Promise<IJailbird[]> => {
   return await Jailbird.find({ isPosted: false });
 }
 
-const createMultipleJailbirds = async (jailbirds: IJailbird) => {
+const createMultipleJailbirds = async (jailbirds: IJailbird): Promise<any> => {
   return await Jailbird.insertMany(jailbirds)
 };
+
+/**
+ * 
+ * Does the same thing as createJailbird, but accepts an instance of
+ * the Jailbird interface as an argument.
+ * 
+ * @param jailbird 
+ */
+const saveJailbird = async (jailbird: IJailbird) => {
+  const newJailbird = new Jailbird(jailbird);
+  return await newJailbird.save();
+}
 
 const createJailbird = async (
   inmateID: string,
@@ -83,4 +95,5 @@ export {
   deleteOldJailbirds,
   deleteOldJailbirdsFromFacility,
   updateJailbird,
+  saveJailbird,
 };

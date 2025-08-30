@@ -1,15 +1,15 @@
 import { Page } from "puppeteer";
 import { Jailbird } from "../../app";
+import { logMessage } from "../loggerService";
 import { JAILS, JAIL_URLS } from "../../utils/strings";
 import { launchBrowser } from "../browserLaunchService/browserLauncherService";
 import { clickButton, focusOn, typeInField } from "../pageInteractions";
-import scrapeTable from "./richmondTableScraperService";
 import { proveHumanity } from "../captchaService/capchaService";
 import buildJailbird from "./richmondJailbirdFactory";
+import { findJailbirdByInmateId, saveJailbird } from "../jailbirdService";
 const { getRandNumInRange } = require('../randomNumberService');
 const { getFirstNames, getLastNames } = require('../../utils/names');
 const config = require('../../utils/environment');
-const { logMessage } = require('../loggerService');
 
 export const buildJailbirds = async (): Promise<Jailbird[]> => {
   let firstNameBrowser = null, lastNameBrowser = null;
@@ -241,6 +241,12 @@ const doSearch = async (page: Page, name: string, searchBoxID: string): Promise<
         const jailbird = await buildJailbird(page);  
         if (jailbird) {
           webpageJailbirds.push(jailbird);
+        }
+        
+        // saving richmond jailbirds individually because the scraper is prone to errors
+        const foundJailbird = await findJailbirdByInmateId(jailbird?.inmateID)
+        if (!foundJailbird) {
+          await saveJailbird(jailbird);
         }
       } catch (e:any) {
         logMessage(`Error encountered while building jailbird, ${e}`);

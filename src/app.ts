@@ -5,8 +5,6 @@ const argv = require('minimist')(process.argv);
 const config = require('./utils/environment');
 const { JAILS } = require('./utils/strings');
 const {
-  createMultipleJailbirds,
-  findAllJailbirds,
   deleteOldJailbirdsFromFacility,
 } = require("./services/jailbirdService");
 import { buildJailbirds as buildHenricoJailbirds } from './services/henricoScraper/henricoScraperService';
@@ -113,41 +111,6 @@ const pruneDB = async () => {
   );
 };
 
-const saveNewJailbirdsToDB = async (newJailbirds: Jailbird[]) => {
-  try {
-    await createMultipleJailbirds(newJailbirds);
-  } catch (e: any) {
-    logMessage(`Error encountered while creating jailbird: ${e}`);
-  }
-};
-
-const getJailbirdsToPost = async () => {
-  let webpageJailbirds: Jailbird[] = [];
-  try {
-    // get the current jailbirds from the webpages
-    webpageJailbirds = await scrapeWebpages();
-  } catch (e: any) {
-    logMessage(
-      `Error encountered while scraping webpage, no new jailbirds will be saved to the db: ${e}`
-    );
-  }
-
-  // get a list of all known jailbirds (posted or unposted) from the DB
-  const allDbJailbirds = await findAllJailbirds();
-
-  // filter the webpage jailbirds we know about already...
-  let unsavedJailbirds = filterSavedJailbirds(allDbJailbirds, webpageJailbirds);
-
-  // ...and filter the boring jailbirds
-  const CONTEMPT_OF_COURT = "OTHER OFFENSES-CONTEMPT OF COURT";
-  const PROBATION_VIOLATION = "OTHER OFFENSES-PROBATION VIOLATION";
-  const noContemptJbs = filterBoringJailbirds(unsavedJailbirds, CONTEMPT_OF_COURT);
-  const filteredJbs = filterBoringJailbirds(noContemptJbs, PROBATION_VIOLATION);
-  
-  // there will likely be duplicates in the combined array, remove the dupes
-  return _.uniqBy(filteredJbs, "inmateID");
-};
-
 /**
  * posts a scrapes the jail webpages then creates a number of 
  * instagram posts based on what is configured in the env file
@@ -156,24 +119,15 @@ const performBatchPost = async () => {
   // to keep from running out of database space, get rid of old jailbirds
   pruneDB();
 
-  // scrape the jail webpages to get the refined/filtered list of jailbirds
-  let jailbirds = [];
+  // scrape the jail webpages and update the database
   try {
-    jailbirds = await getJailbirdsToPost();
+    await scrapeWebpages();
   } catch (e: any) {
     logMessage(`Encountered error while getting the list of Jailbirds: ${e}`);
   }
 
-  // save any jailbirds we've got to the DB
-  try {
-    logMessage(`Saving ${jailbirds.length} new jailbirds to the database`);
-    await saveNewJailbirdsToDB(jailbirds);
-  } catch (e: any) {
-    logMessage(`Encountered error while saving new jailbirds to the DB: ${e}`);
-  }
-
   // remaining jbs in DB will be what we want to post to instagram, do that here
-  return await postBatchToInsta();
+  // return await postBatchToInsta();
 };
 
 // check if we are performing the nightly batch or a manual run

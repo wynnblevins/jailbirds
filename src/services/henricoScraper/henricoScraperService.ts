@@ -1,8 +1,14 @@
+import { _ } from "lodash";
 import { Jailbird } from "../../app";
 import { JAILS } from "../../utils/strings";
 import { logMessage } from "../loggerService/loggerService";
 import { selectFromMenu } from "../pageInteractions";
 import { launchBrowser } from "../browserLaunchService";
+import { filterBoringJailbirds, filterSavedJailbirds } from "../jailbirdFilterService";
+const {
+  createMultipleJailbirds,
+  findAllJailbirds,
+} = require("../jailbirdService");
 
 const inmatesPageURL: string = "https://ppd.henrico.us/searcharrest.aspx";
 
@@ -18,6 +24,21 @@ const capitalizeStrings = (jailbirds: Jailbird[]): Jailbird[] => {
   });
   
   return capitalizedJailbirds;
+};
+
+const filterJbs = async (unfilteredJbs: Jailbird[]): Promise<Jailbird[]> => {
+  // ...filter the jailbirds we already know about
+  const allDbJailbirds = await findAllJailbirds()
+
+  // ...and filter the boring jailbirds that nobody cares about
+  const CONTEMPT_OF_COURT = "OTHER OFFENSES-CONTEMPT OF COURT";
+  const PROBATION_VIOLATION = "OTHER OFFENSES-PROBATION VIOLATION";
+  let filteredJbs = filterBoringJailbirds(unfilteredJbs, CONTEMPT_OF_COURT);
+  filteredJbs = filterBoringJailbirds(filteredJbs, PROBATION_VIOLATION);
+
+  filteredJbs = _.uniqBy(filteredJbs, "inmateID");
+
+  return await filterSavedJailbirds(allDbJailbirds, filteredJbs);
 };
 
 /**
@@ -54,7 +75,12 @@ const mergeJailbirdsIntoUnique = (nonUniqueJailbirds: Jailbird[]): Jailbird[] =>
   return uniqueJailbirds;
 }
 
-export const buildJailbirds = async (): Promise<Jailbird[]> => {
+/**
+ * scrapes the Henrico county jail page and stores new jailbirds in the database 
+ * 
+ * @returns a promise that resolves when the page scraping is complete
+ */
+export const buildJailbirds = async (): Promise<any> => {
   let jailbirds: Jailbird[] = [];
   let page = null;
 
@@ -147,11 +173,12 @@ export const buildJailbirds = async (): Promise<Jailbird[]> => {
   jailbirds = capitalizeStrings(jailbirds);
 
   await browser.close();
-  
+
+  const newJailbirds = await filterJbs(jailbirds);
+
   logMessage(
-    `Returning ${jailbirds.length} jailbirds from Henrico scraper service`, 
+    `Creating ${newJailbirds?.length} jailbirds in the database`, 
     JAILS.HENRICO_COUNTY_REGIONAL_JAIL
   );
-
-  return jailbirds;
+  return await createMultipleJailbirds(newJailbirds);
 };
