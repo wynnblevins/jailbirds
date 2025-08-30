@@ -272,30 +272,6 @@ const doSearch = async (page: Page, name: string, searchBoxID: string): Promise<
 };
 
 /**
- * There seems to be a timing issue.  This function gets the first 
- * table column by searching for either "Loading" or "View Less" 
- * 
- * @param tableData an array of strings representing the table data 
- * @returns the first column of the open table row
- */
-const getFirstColNdx = (tableData: string[]) => {
-  const VIEW_LESS_STR = 'View Less';
-  const LOADING_STR = 'Loading...';
-  const viewLessNdx = tableData.indexOf(VIEW_LESS_STR);
-  const loadingNdx = tableData.indexOf(LOADING_STR);
-
-  if (viewLessNdx === -1 && loadingNdx !== -1) {
-    return loadingNdx;
-  } 
-
-  if (viewLessNdx === -1 && loadingNdx === -1) {
-    throw new Error('Unable to parse table data.');
-  }
-
-  return viewLessNdx;
-};
-
-/**
  * @param page the puppeteer page object
  * @param btnText the text of the button to search for
  * @returns an array of buttons that match the provided text
