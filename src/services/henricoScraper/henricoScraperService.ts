@@ -28,17 +28,18 @@ const capitalizeStrings = (jailbirds: Jailbird[]): Jailbird[] => {
 
 const filterJbs = async (unfilteredJbs: Jailbird[]): Promise<Jailbird[]> => {
   // ...filter the jailbirds we already know about
-  const allDbJailbirds = await findAllJailbirds()
+  const allDbJailbirds = await findAllJailbirds();
+  let filteredJbs = filterSavedJailbirds(allDbJailbirds, unfilteredJbs);
 
   // ...and filter the boring jailbirds that nobody cares about
   const CONTEMPT_OF_COURT = "OTHER OFFENSES-CONTEMPT OF COURT";
   const PROBATION_VIOLATION = "OTHER OFFENSES-PROBATION VIOLATION";
-  let filteredJbs = filterBoringJailbirds(unfilteredJbs, CONTEMPT_OF_COURT);
+  filteredJbs = filterBoringJailbirds(filteredJbs, CONTEMPT_OF_COURT);
   filteredJbs = filterBoringJailbirds(filteredJbs, PROBATION_VIOLATION);
 
   filteredJbs = _.uniqBy(filteredJbs, "inmateID");
 
-  return await filterSavedJailbirds(allDbJailbirds, filteredJbs);
+  return filteredJbs;
 };
 
 /**
@@ -174,6 +175,8 @@ export const buildJailbirds = async (): Promise<any> => {
 
   await browser.close();
 
+  // doing some refinement of what gets posted (ie don't 
+  // post things twice, don't post boring jbs, etc) 
   const newJailbirds = await filterJbs(jailbirds);
 
   logMessage(
