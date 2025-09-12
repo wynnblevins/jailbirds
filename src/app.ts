@@ -151,7 +151,7 @@ if (argv.m) {
   logMessage('Starting cron job.');
   
   // if not running in manual mode, start the cron job
-  cron.schedule('0 13 * * *', () => {
+  cron.schedule('0 15 * * *', () => {
     performBatchPost().then(() => {
       logMessage('Program complete, stopping execution.');
     }).catch((e) => {

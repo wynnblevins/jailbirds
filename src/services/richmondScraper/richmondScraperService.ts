@@ -246,10 +246,17 @@ const doSearch = async (page: Page, name: string, searchBoxID: string): Promise<
         // saving richmond jailbirds individually because the scraper is prone to errors
         const foundJailbird = await findJailbirdByInmateId(jailbird?.inmateID)
         if (!foundJailbird) {
+          logMessage(
+            `Saving ${jailbird.name} to database`, 
+            JAILS.RICHMOND_CITY_JAIL
+          );
           await saveJailbird(jailbird);
         }
       } catch (e:any) {
-        logMessage(`Error encountered while building jailbird, ${e}`);
+        logMessage(
+          `Error encountered while building jailbird, ${e}`, 
+          JAILS.RICHMOND_CITY_JAIL
+        );
       } finally {
         const VIEW_LESS_STR = "View Less";
         const viewLessBtns = await getButtonsByText(page, VIEW_LESS_STR);
