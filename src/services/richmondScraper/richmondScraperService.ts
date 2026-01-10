@@ -135,7 +135,7 @@ const doJBSearches = async (page: Page, names: string[], searchFieldID: string):
   let webpageJailbirds: Jailbird[] = [];
   
   const upper = +config.richmond.upperSearchCount;
-  const lower = +config.richmond.upperSearchCount;
+  const lower = +config.richmond.lowerSearchCount;
   const numOfSearches = getRandNumInRange(lower, upper)
   
   // do name searches
