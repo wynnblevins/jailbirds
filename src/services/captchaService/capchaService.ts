@@ -4,6 +4,11 @@ import { delayMs } from "../delayService";
 import { logMessage } from "../loggerService";
 
 const CAPTCHA_API_RESPONSE_FORMAT_ERROR = 'Unable to parse the response from the captcha API';
+const TWENTY_SECONDS = 20000;
+const CAPTCHA_TEXT_FIELD_ID = '#captchaCode';
+const CAPTCHA_IMG_ID = '#img-captcha';
+const CAPTCHA_NOT_READY_ERROR_MSG = 'CAPCHA_NOT_READY';
+const INCORRECT_CAPTCHA_MSG = "Incorrect, Click Here to Try Again";
 
 /**
  * 
@@ -22,7 +27,7 @@ const solveCaptcha = async (captchaBody: string, ms?: number): Promise<any> => {
     logMessage(message);
     throw new Error(message);
   } else {
-    await delayMs(ms || 20000);
+    await delayMs(ms || TWENTY_SECONDS);
     result = await getCaptchaSolution(captchaSubmissionResponse?.data);  
   }
   
@@ -30,8 +35,7 @@ const solveCaptcha = async (captchaBody: string, ms?: number): Promise<any> => {
 };
 
 const attemptCaptcha = async (captchaSrc): Promise<string> => {
-  const TWENTY_SECOND_TIMEOUT = 20000;
-  const response = await solveCaptcha(captchaSrc, TWENTY_SECOND_TIMEOUT);
+  const response = await solveCaptcha(captchaSrc, TWENTY_SECONDS);
   
   let captchaAnswer = '';
   if (response?.data?.request) {
@@ -42,14 +46,20 @@ const attemptCaptcha = async (captchaSrc): Promise<string> => {
 
 const proveHumanity = async (page: Page) => {
   try {
-    const CAPTCHA_TEXT_FIELD_ID = '#captchaCode';
-    const CAPTCHA_IMG_ID = '#img-captcha';
-    const CAPTCHA_NOT_READY_ERROR_MSG = 'CAPCHA_NOT_READY';
-    const INCORRECT_CAPTCHA_MSG = "Incorrect, Click Here to Try Again";
-
     // solve the captcha answer
-    await page.waitForSelector(CAPTCHA_IMG_ID);
-    const captchaSrc = await page.$eval(CAPTCHA_IMG_ID, (el) => el.getAttribute('src'));
+    await page.waitForFunction(
+      (selector) => {
+        const img = document.querySelector(selector) as HTMLImageElement | null;
+        return img && img.getAttribute('src');
+      },
+      {},
+      CAPTCHA_IMG_ID
+    );
+    const captchaSrc = await page.$eval(
+      CAPTCHA_IMG_ID,
+      (el: HTMLImageElement) => el.getAttribute('src')
+    );
+
     let captchaAnswerStr = null;
     try {
       captchaAnswerStr = await attemptCaptcha(captchaSrc);

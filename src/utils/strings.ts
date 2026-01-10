@@ -11,8 +11,8 @@ export const JAILS: JAIL_NAMES = {
 };
 
 export const JAIL_URLS = {
-  RICHMOND_CITY_JAIL: 'https://omsweb.secure-gps.com/jtclientweb/jailtracker/index/Richmond_Co_VA',
-  HENRICO_COUNTY_REGIONAL_JAIL: 'https://ppd.henrico.us/searcharrest.aspx' 
+  RICHMOND_CITY_JAIL: 'https://omsweb.public-safety-cloud.com/jtclientweb/jailtracker/index/Richmond_Co_VA',
+  HENRICO_COUNTY_REGIONAL_JAIL: 'https://ppd.henrico.gov/searcharrest.aspx' 
 };
 
 export const MIDLOTHIAN_CHARGES = {
