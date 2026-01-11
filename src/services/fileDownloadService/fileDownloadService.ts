@@ -1,5 +1,6 @@
 const https = require("https"); // or 'https' for https:// URLs
 const fs = require("fs");
+const { logMessage } = require('../services/loggerService');
 
 const downloadFile = (url: string, ndx: number) => {
   try {
@@ -11,12 +12,14 @@ const downloadFile = (url: string, ndx: number) => {
       // after download completed close filestream
       stream.on("finish", () => {
         stream.close();
-        console.log("Download Completed");
+        logMessage("Download complete.")
       });
     });
   } catch (e) {
-    console.error("error encountered downloading file", e);
+    logMessage(`error encountered downloading file, ${e}`);
   }
 };
 
-module.exports = { downloadFile };
+export {
+  downloadFile
+}

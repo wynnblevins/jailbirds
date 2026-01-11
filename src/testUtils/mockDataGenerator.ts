@@ -1,6 +1,17 @@
+import mockingoose from 'mockingoose';
 import { Jailbird } from "../app";
 import { faker } from '@faker-js/faker';
 import { JAILS, MIDLOTHIAN_CHARGES, RICHMOND_CHARGES } from "../utils/strings";
+import mongoose from 'mongoose';
+import puppeteer, { Browser, BrowserContext, ElementHandle, Page } from 'puppeteer';
+import { disconnect, listenerCount, removeAllListeners } from 'process';
+import { queryObjects } from 'v8';
+
+const DUMMY_INMATE_ID_0 = "000000";
+const DUMMY_INMATE_ID_1 = "000001";
+const DUMMY_INMATE_ID_2 = "000002";
+const DUMMY_INMATE_ID_3 = "000003";
+const DUMMY_INMATE_ID_4 = "000004";
 
 const POSSIBLE_MIDLOTHIAN_CHARGES = [
   MIDLOTHIAN_CHARGES.LARCENY_PETIT_SHOPLIFTING,
@@ -63,6 +74,209 @@ const createDummyJailbird = (jailbird?: Partial<Jailbird>): Jailbird => {
   }
 };
 
+const createDummyJailbirdWithId = (jailbird?: Partial<Jailbird>, _id?: mongoose.Types.ObjectId) => {
+  const createdJailbird = createDummyJailbird(jailbird);
+  const jbWithId = { 
+    ...createdJailbird, 
+    _id: _id || new mongoose.Types.ObjectId() 
+  };
+  return jbWithId;
+};
+
+const createDummyPuppeteerElementHandle = (): ElementHandle => {
+  const dummyElementHandle = {
+    frame: jest.fn(),
+    $: jest.fn(),
+    $$: jest.fn(),
+    $eval: jest.fn(),
+    $$eval: jest.fn(),
+    isVisible: jest.fn(),
+    isHidden: jest.fn(),
+    waitForSelector: jest.fn(), 
+    toElement: jest.fn(), 
+    contentFrame: jest.fn(),
+    clickablePoint: jest.fn(), 
+    hover: jest.fn(), 
+    click: jest.fn(),
+    drag: jest.fn(), 
+    dragEnter: jest.fn(), 
+    dragOver: jest.fn(),    
+    drop: jest.fn(), 
+    dragAndDrop: jest.fn(), 
+    select: jest.fn(),
+    uploadFile: jest.fn(), 
+    tap: jest.fn(), 
+    touchStart: jest.fn(),
+    touchMove: jest.fn(), 
+    touchEnd: jest.fn(), 
+    focus: jest.fn(),
+    type: jest.fn(), 
+    press: jest.fn(), 
+    boundingBox: jest.fn(),
+    boxModel: jest.fn(), 
+    screenshot: jest.fn(), 
+    isIntersectingViewport: jest.fn(),
+    scrollIntoView: jest.fn(), 
+    autofill: jest.fn(), 
+    move: jest.fn(),
+    evaluate: jest.fn(), 
+    evaluateHandle: jest.fn(), 
+    getProperty: jest.fn(),
+    getProperties: jest.fn(), 
+    jsonValue: jest.fn(), 
+    asElement: jest.fn(),
+    dispose: jest.fn(), 
+    remoteObject: jest.fn()
+  };
+
+  // @ts-ignore
+  return dummyElementHandle;
+};
+
+const createDummyPuppeteerPage = (): Page => {
+  const dummyPage = {
+    on: jest.fn(),
+    off: jest.fn(),
+    emit: jest.fn(),
+    once: jest.fn(),
+    listenerCount: jest.fn(),
+    removeAllListeners: jest.fn(),
+    locator: jest.fn(),
+    $: jest.fn(),
+    $$: jest.fn(),
+    evaluateHandle: jest.fn(),
+    queryObjects: jest.fn(),
+    $eval: jest.fn(),
+    $$eval: jest.fn(),
+    addScriptTag: jest.fn(),
+    addStyleTag: jest.fn(),
+    exposeFunction: jest.fn(),
+    removeExposedFunction: jest.fn(),
+    url: jest.fn(),
+    content: jest.fn(),
+    setContent: jest.fn(),
+    goto: jest.fn(),
+    waitForNavigation: jest.fn(),
+    waitForRequest: jest.fn(),
+    waitForResponse: jest.fn(),
+    waitForNetworkIdle: jest.fn(),
+    waitForFrame: jest.fn(),
+    emulate: jest.fn(),
+    evaluate: jest.fn(),
+    screencast: jest.fn(),
+    screenshot: jest.fn(),
+    title: jest.fn(),
+    click: jest.fn(),
+    focus: jest.fn(),
+    hover: jest.fn(),
+    select: jest.fn(),
+    tap: jest.fn(),
+    type: jest.fn(),
+    waitForSelector: jest.fn(),
+    waitForFunction: jest.fn(),
+    waitForDevicePrompt: jest.fn(),
+    isClosed: jest.fn(),
+    close: jest.fn(),
+    pdf: jest.fn(),
+    createPDFStream: jest.fn(),
+    setCacheEnabled: jest.fn(),
+    removeScriptToEvaluateOnNewDocument: jest.fn(),
+    evaluateOnNewDocument: jest.fn(),
+    viewport: jest.fn(),
+    setViewPort: jest.fn(),
+    emulateVisionDeficiency: jest.fn(),
+    emulateIdleState: jest.fn(),
+    emulateTimezone: jest.fn(),
+    emulageMediaFeatures: jest.fn(),
+    emulateCPUThrottling: jest.fn(),
+    emulateMediaType: jest.fn(),
+    setBypassCSP: jest.fn(),
+    setJavaScriptEnabled: jest.fn(),
+    bringToFront: jest.fn(),
+    goForward: jest.fn(),
+    goBack: jest.fn(),
+    reload: jest.fn(),
+    metrics: jest.fn(),
+    setUserAgent: jest.fn(),
+    setExtraHTTPHeaders: jest.fn(),
+    authenticate: jest.fn(),
+    setCookie: jest.fn(),
+    deleteCookie: jest.fn(),
+    cookies: jest.fn(),
+    getDefaultTimeout: jest.fn(),
+    setDefaultTimeout: jest.fn(),
+    setDefaultNavigationTimeout: jest.fn(),
+    emulateNetworkConditions: jest.fn(),
+    setOfflineMode: jest.fn(),
+    setDragInterception: jest.fn(),
+    setBypassServiceWorker: jest.fn(),
+    setRequestInterception: jest.fn(),
+    workers: jest.fn(),
+    frames: jest.fn(),
+    isServiceWorkerBypassed: jest.fn(),
+    isDragInterceptionEnabled: jest.fn(),
+    isJavaScriptEnabled: jest.fn(),
+    waitForFileChooser: jest.fn(),
+    serGeolocation: jest.fn(),
+    target: jest.fn(),
+    browser: jest.fn(),
+    browserContext: jest.fn(),
+    mainFrame: jest.fn(),
+    createCDPSession: jest.fn(),
+    keyboard: jest.fn(),
+    touchscreen: jest.fn(),
+    coverage: jest.fn(),
+    tracing: jest.fn(),
+    accessibility: jest.fn(),
+    emulateMediaFeatures: jest.fn(),
+    setGeolocation: jest.fn(),
+    setViewport: jest.fn(),
+    mouse: jest.fn(),
+  }
+  // @ts-ignore
+  return dummyPage;
+};
+
+const createDummyPuppeteerBrowser = (): Browser => {
+  const browser = {
+    process: jest.fn(),
+    createBrowserContext: jest.fn(),
+    browserContexts: jest.fn(),
+    defaultBrowserContext: jest.fn(),
+    wsEndpoint: jest.fn(),
+    newPage: jest.fn(),
+    targets: jest.fn(),
+    target: jest.fn(),
+    waitForTarget: jest.fn(),
+    pages: jest.fn(),
+    version: jest.fn(),
+    userAgent: jest.fn(),
+    close: jest.fn(),
+    disconnect: jest.fn(),
+    isConnected: jest.fn(),
+    connected: jest.fn(),
+    debugInfo: jest.fn(),
+    on: jest.fn(),
+    off: jest.fn(),
+    emit: jest.fn(),    
+    once: jest.fn(),
+    listenerCount: jest.fn(),
+    removeAllListeners: jest.fn(),
+  };
+
+  // @ts-ignore
+  return browser;
+}
+
 export {
-  createDummyJailbird
+  DUMMY_INMATE_ID_0,
+  DUMMY_INMATE_ID_1,
+  DUMMY_INMATE_ID_2,
+  DUMMY_INMATE_ID_3,
+  DUMMY_INMATE_ID_4,
+  createDummyJailbird,
+  createDummyJailbirdWithId,
+  createDummyPuppeteerElementHandle,
+  createDummyPuppeteerBrowser,
+  createDummyPuppeteerPage
 }

@@ -1,16 +1,17 @@
-import { Jailbird as IJailbird } from "../app";
+import { Jailbird as IJailbird } from "../../app";
+import { Jailbird } from "../../models";  
 
-const Jailbird = require("../models/Jailbird");
-
-const findAllJailbirds = async () => {
-  return await Jailbird.find();
+const findAllJailbirds = async (): Promise<IJailbird[]> => {
+  const result = await Jailbird.find();
+  const jbs = result.map((jb) => jb.toObject() as IJailbird)
+  return jbs;
 };
 
 const findJailbirdById = async (id: string) => {
   return await Jailbird.find({ _id: id });
 };
 
-const findJailbirdByInmateId = async (inmateID: string) => {
+const findJailbirdByInmateId = async (inmateID: string): Promise<IJailbird> => {
   return await Jailbird.findOne({ inmateID: inmateID });
 }
 
@@ -18,9 +19,21 @@ const findUnpostedJailbirds = async (): Promise<IJailbird[]> => {
   return await Jailbird.find({ isPosted: false });
 }
 
-const createMultipleJailbirds = async (jailbirds: IJailbird) => {
+const createMultipleJailbirds = async (jailbirds: IJailbird): Promise<any> => {
   return await Jailbird.insertMany(jailbirds)
 };
+
+/**
+ * 
+ * Does the same thing as createJailbird, but accepts an instance of
+ * the Jailbird interface as an argument.
+ * 
+ * @param jailbird 
+ */
+const saveJailbird = async (jailbird: IJailbird) => {
+  const newJailbird = new Jailbird(jailbird);
+  return await newJailbird.save();
+}
 
 const createJailbird = async (
   inmateID: string,
@@ -71,7 +84,7 @@ const updateJailbird = async (inmateID: string, update: object) => {
   return await Jailbird.findOneAndUpdate({ inmateID: inmateID }, update);
 };
 
-export = {
+export {
   findJailbirdByInmateId,
   findAllJailbirds,
   findJailbirdById,
@@ -82,4 +95,5 @@ export = {
   deleteOldJailbirds,
   deleteOldJailbirdsFromFacility,
   updateJailbird,
+  saveJailbird,
 };
