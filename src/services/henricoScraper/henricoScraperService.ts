@@ -1,6 +1,6 @@
 import { _ } from "lodash";
 import { Jailbird } from "../../app";
-import { JAILS } from "../../utils/strings";
+import { JAILS, JAIL_URLS } from "../../utils/strings";
 import { logMessage } from "../loggerService/loggerService";
 import { selectFromMenu } from "../pageInteractions";
 import { launchBrowser } from "../browserLaunchService";
@@ -9,8 +9,6 @@ const {
   createMultipleJailbirds,
   findAllJailbirds,
 } = require("../jailbirdService");
-
-const inmatesPageURL: string = "https://ppd.henrico.us/searcharrest.aspx";
 
 const removeNumbersFromCharge = (charges: string) => {
   return charges.replace(/\d{1,4} - /i, "");
@@ -90,19 +88,22 @@ export const buildJailbirds = async (): Promise<any> => {
     'Launching headless browser for Henrico page.', 
     JAILS.HENRICO_COUNTY_REGIONAL_JAIL
   );
-  const browser = await launchBrowser();
+  const browser = await launchBrowser(false);
 
   // go to the Henrico jail page
   try {
-    logMessage(`Going to ${inmatesPageURL}`, JAILS.HENRICO_COUNTY_REGIONAL_JAIL);
+    logMessage(
+      `Going to ${JAIL_URLS.HENRICO_COUNTY_REGIONAL_JAIL}`, 
+      JAILS.HENRICO_COUNTY_REGIONAL_JAIL
+    );
     page = await browser.newPage();
-    await page.goto(inmatesPageURL, {
+    await page.goto(JAIL_URLS.HENRICO_COUNTY_REGIONAL_JAIL, {
       waitUntil: 'load',
       timeout: 20000,
     });
   } catch (e: any) {
     browser.close();
-    logMessage(`Error encountered while going to ${inmatesPageURL}: ${e}`);
+    logMessage(`Error encountered while going to ${JAIL_URLS.HENRICO_COUNTY_REGIONAL_JAIL}: ${e}`);
     throw new Error(e);
   }
 

@@ -105,9 +105,17 @@ const buildJailbird = async (page): Promise<Jailbird> => {
     // get jailbird age
     const age = getAge(tableData);
 
+    // wait for the mugshot to appear
+    await page.waitForSelector('img.img-thumbnail[src]', {
+      visible: true,
+      timeout: 5000,
+    });
+
     // get jailbird mugshot
-    const imgs = await page.$$eval('img.img-thumbnail[src]', imgs => imgs.map(img => img.getAttribute('src')));
-    const picture = imgs[0];
+    const picture = await page.$eval(
+      'img.img-thumbnail[src]',
+      img => img.getAttribute('src')
+    );
 
     // write the base64 string to a local image for later uploads
     if (picture && charges && name) {
