@@ -240,17 +240,17 @@ const doSearch = async (page: Page, name: string, searchBoxID: string): Promise<
       try {
         const jailbird = await buildJailbird(page);  
         if (jailbird) {
-          webpageJailbirds.push(jailbird);
-        }
-        
-        // saving richmond jailbirds individually because the scraper is prone to errors
-        const foundJailbird = await findJailbirdByInmateId(jailbird?.inmateID)
-        if (!foundJailbird) {
-          logMessage(
-            `Saving ${jailbird.name} to database`, 
-            JAILS.RICHMOND_CITY_JAIL
-          );
-          await saveJailbird(jailbird);
+          // saving richmond jailbirds individually because the scraper is prone to errors
+          const foundJailbird = await findJailbirdByInmateId(jailbird?.inmateID)
+          if (!foundJailbird) {
+            logMessage(
+              `Saving ${jailbird.name} to database`, 
+              JAILS.RICHMOND_CITY_JAIL
+            );
+            webpageJailbirds.push(jailbird);
+
+            await saveJailbird(jailbird);
+          }
         }
       } catch (e:any) {
         logMessage(

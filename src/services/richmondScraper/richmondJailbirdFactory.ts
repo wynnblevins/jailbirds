@@ -27,15 +27,13 @@ const getFirstColNdx = (tableData: string[]) => {
 };
 
 const buildNameStr = (jailbirdData: string[]): string => {
-  const LAST_NAME_NDX = 1;
-  const FIRST_NAME_NDX = 2;
-  const MIDDLE_NAME_NDX = 3;
+  const parts = [
+    jailbirdData[2], // first
+    jailbirdData[3], // middle
+    jailbirdData[1], // last
+  ].filter(Boolean);
 
-  const lastName = jailbirdData[LAST_NAME_NDX];
-  const firstName = jailbirdData[FIRST_NAME_NDX];
-  const middleName = jailbirdData[MIDDLE_NAME_NDX];
-
-  return `${firstName} ${middleName} ${lastName}`;
+  return parts.join(' ');
 };
 
 const getInmateIdStr = (jailbirdData: string[]): string => {
@@ -76,11 +74,11 @@ const buildChargesStr = async (charges): Promise<string> => {
 };
 
 const getAge = (jailbirdData: string[]): number => {
-  const CURRENT_AGE_LABEL = 'Current Age:';
-  const CURRENT_AGE_LABEL_NDX = jailbirdData.indexOf(CURRENT_AGE_LABEL);
-  const CURRENT_AGE_NDX = CURRENT_AGE_LABEL_NDX + 1;
-  const age = jailbirdData[CURRENT_AGE_NDX];
-  return parseInt(age);
+  const ndx = jailbirdData.indexOf('Current Age:');
+  if (ndx === -1) return null;
+
+  const age = parseInt(jailbirdData[ndx + 1], 10);
+  return Number.isNaN(age) ? null : age;
 };
 
 const buildJailbird = async (page): Promise<Jailbird> => {
