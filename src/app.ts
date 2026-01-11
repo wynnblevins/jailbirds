@@ -72,11 +72,10 @@ const scrapeWebpages = async (): Promise<Jailbird[]> => {
   let resolvedData = [];
   try {
     resolvedData = await Promise.all(scraperPromises);
+    return resolvedData?.flat(1);
   } catch (e: any) {
     throw new Error('Error encountered while waiting for promises to resolve.');
   }
-  
-  return resolvedData.flat(1);
 };
 
 /**
