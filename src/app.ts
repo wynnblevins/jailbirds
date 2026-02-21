@@ -74,7 +74,7 @@ const scrapeWebpages = async (): Promise<Jailbird[]> => {
     resolvedData = await Promise.all(scraperPromises);
     return resolvedData?.flat(1);
   } catch (e: any) {
-    throw new Error('Error encountered while waiting for promises to resolve.');
+    logMessage('Error encountered while waiting for promises to resolve.');
   }
 };
 
