@@ -34,24 +34,25 @@ mongoose.connect(mongoURL);
  * 
  * @returns a promise for the jailbirds currently on the jail webpages
  */
-const scrapeWebpages = async (): Promise<Jailbird[]> => {
+const scrapeWebpages = async (): Promise<Jailbird[] | undefined> => {
   const scraperPromises: Promise<any>[] = [];
   
+  // TODO: update richmond scraper to work with instagram-graph-api
   // scrape the Richmond jail roster webpage
-  logMessage(
-    "Scraping Richmond jailbird web page...", 
-    JAILS.RICHMOND_CITY_JAIL
-  );
+  // logMessage(
+  //   "Scraping Richmond jailbird web page...", 
+  //   JAILS.RICHMOND_CITY_JAIL
+  // );
 
-  try {
-    const richmondJbsPromise = buildRichmondJailbirds();
-    scraperPromises.push(richmondJbsPromise);
-  } catch (e: any) {
-    logMessage(
-      "Error encountered while building Richmond jailbirds", 
-      JAILS.RICHMOND_CITY_JAIL
-    );
-  }
+  // try {
+  //   const richmondJbsPromise = buildRichmondJailbirds();
+  //   scraperPromises.push(richmondJbsPromise);
+  // } catch (e: any) {
+  //   logMessage(
+  //     "Error encountered while building Richmond jailbirds", 
+  //     JAILS.RICHMOND_CITY_JAIL
+  //   );
+  // }
 
   // scrape the Henrico jail roster webpage
   logMessage(
@@ -76,6 +77,8 @@ const scrapeWebpages = async (): Promise<Jailbird[]> => {
   } catch (e: any) {
     logMessage('Error encountered while waiting for promises to resolve.');
   }
+
+  return undefined;
 };
 
 /**
@@ -133,7 +136,7 @@ if (argv.m) {
     postJailbirdById(inmateIdStr).then(() => {
       logMessage("Program complete, stopping execution.")
       process.exit();
-    }).catch((e) => {
+    }).catch((e: any) => {
       logMessage(`Program encountered error while performing manual post: ${e}`);
       process.exit(1);
     });
