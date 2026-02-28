@@ -38,20 +38,20 @@ const scrapeWebpages = async (): Promise<Jailbird[]> => {
   const scraperPromises: Promise<any>[] = [];
   
   // scrape the Richmond jail roster webpage
-  logMessage(
-    "Scraping Richmond jailbird web page...", 
-    JAILS.RICHMOND_CITY_JAIL
-  );
+  // logMessage(
+  //   "Scraping Richmond jailbird web page...", 
+  //   JAILS.RICHMOND_CITY_JAIL
+  // );
 
-  try {
-    const richmondJbsPromise = buildRichmondJailbirds();
-    scraperPromises.push(richmondJbsPromise);
-  } catch (e: any) {
-    logMessage(
-      "Error encountered while building Richmond jailbirds", 
-      JAILS.RICHMOND_CITY_JAIL
-    );
-  }
+  // try {
+  //   const richmondJbsPromise = buildRichmondJailbirds();
+  //   scraperPromises.push(richmondJbsPromise);
+  // } catch (e: any) {
+  //   logMessage(
+  //     "Error encountered while building Richmond jailbirds", 
+  //     JAILS.RICHMOND_CITY_JAIL
+  //   );
+  // }
 
   // scrape the Henrico jail roster webpage
   logMessage(
@@ -76,6 +76,8 @@ const scrapeWebpages = async (): Promise<Jailbird[]> => {
   } catch (e: any) {
     logMessage('Error encountered while waiting for promises to resolve.');
   }
+
+  return Promise.resolve([]);
 };
 
 /**
@@ -122,22 +124,24 @@ const performBatchPost = async () => {
   }
 
   // remaining jbs in DB will be what we want to post to instagram, do that here
-  return await postBatchToInsta();
+  
+  // TODO: uncomment this code
+  // return await postBatchToInsta();
 };
 
 // check if we are performing the nightly batch or a manual run
-if (argv.m) {
-  const inmateId = argv._[2];
-  if (inmateId) {
-    const inmateIdStr = inmateId.toString();
-    postJailbirdById(inmateIdStr).then(() => {
-      logMessage("Program complete, stopping execution.")
-      process.exit();
-    }).catch((e) => {
-      logMessage(`Program encountered error while performing manual post: ${e}`);
-      process.exit(1);
-    });
-  } else {
+// if (argv.m) {
+//   const inmateId = argv._[2];
+//   if (inmateId) {
+//     const inmateIdStr = inmateId.toString();
+//     postJailbirdById(inmateIdStr).then(() => {
+//       logMessage("Program complete, stopping execution.")
+//       process.exit();
+//     }).catch((e: any) => {
+//       logMessage(`Program encountered error while performing manual post: ${e}`);
+//       process.exit(1);
+//     });
+//   } else {
     performBatchPost().then(() => {
       logMessage('Program complete, stopping execution.');
       process.exit();
@@ -145,19 +149,19 @@ if (argv.m) {
       logMessage(`Program encountered error: ${e}`);
       process.exit(1);
     });
-  }
-} else {
-  logMessage('Starting cron job.');
+//   }
+// } else {
+//   logMessage('Starting cron job.');
   
-  // if not running in manual mode, start the cron job
-  cron.schedule('0 15 * * *', () => {
-    performBatchPost().then(() => {
-      logMessage('Program complete, stopping execution.');
-    }).catch((e) => {
-      logMessage(`Program encountered error: ${e}`);
-      process.exit(1);
-    });
-  });  
-}
+//   // if not running in manual mode, start the cron job
+//   cron.schedule('0 15 * * *', () => {
+//     performBatchPost().then(() => {
+//       logMessage('Program complete, stopping execution.');
+//     }).catch((e) => {
+//       logMessage(`Program encountered error: ${e}`);
+//       process.exit(1);
+//     });
+//   });  
+// }
 
 export { Jailbird };

@@ -1,169 +1,210 @@
+import axios from 'axios';
+import fs from 'fs';
+import path from 'path';
 import { Jailbird } from "../../app";
-const { IgApiClient } = require('instagram-private-api');
-const fs = require('fs');
-const { get } = require('request-promise');
+
 const config = require('../../utils/environment');
-const { 
-  updateJailbird, 
-  findUnpostedJailbirds, 
+
+const {
+  updateJailbird,
+  findUnpostedJailbirds,
   deleteJailbird,
   findJailbirdByInmateId
 } = require('../jailbirdService');
+
 const { shuffle } = require('../shuffleService');
 const { logMessage } = require('../loggerService');
-import { readFile } from 'fs';
-import { promisify } from 'util';
-import { base64ToImage } from "./base64ToImgService";
+const { base64ToImage } = require("./base64ToImgService");
 
-const readFileAsync = promisify(readFile);
+const GRAPH_BASE = "https://graph.facebook.com/v19.0";
 
-const randomIntFromInterval = (min: number, max: number) => {  
-  return Math.floor(Math.random() * (max - min + 1) + min);
-}
+const randomIntFromInterval = (min: number, max: number) =>
+  Math.floor(Math.random() * (max - min + 1) + min);
+
+const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
 const isValidHttpUrl = (string: string) => {
-  let url;
-  
   try {
-    url = new URL(string);
-  } catch (_) {
-    return false;  
+    new URL(string);
+    return true;
+  } catch {
+    return false;
   }
-
-  return url.protocol === "http:" || url.protocol === "https:";
-}
+};
 
 const logErrorAndDeleteJB = (jailbird: Jailbird) => {
   logMessage(
     `Encountered error while posting to instagram. Deleting problematic jailbird with ID ${jailbird?.inmateID}.`
-  )
-  return deleteJailbird(jailbird._id.toString())
+  );
+  return deleteJailbird(jailbird._id.toString());
+};
+
+const buildCaption = (jailbird: Jailbird) => {
+  return (
+    `\n\n${jailbird.name}, ${jailbird.age}: \n\n` +
+    `${jailbird.facility} \n\n` +
+    `${jailbird.charges} \n\n` +
+    `${jailbird.hashtags.join(' ')}`
+  );
 };
 
 /**
- * Given a jailbird with a base64 image in the picture field, this function will create
- * a local copy of the image then upload the jailbird's image and data to instagram. 
- * Finally, after completing that, this function will delete the local image and return
- * a promise for updating the jailbird's isPosted flag.
- * 
- * @param ig 
- * @param jailbird the jailbird to post
- * @returns 
+ * Converts base64 image to a public URL
+ * Replace hosting logic if needed (S3 recommended)
  */
-const performLocalPost = async (ig, jailbird: Jailbird) => {
-  const localPostPromise = new Promise(async (resolve, reject) => {
-    try {
-      const formattedName = jailbird.name.replace(' ', '_');
-      const imgPath = `./out/images/${formattedName}`;
-      await base64ToImage(jailbird?.picture, imgPath);
+const uploadBase64AndGetUrl = async (jailbird: Jailbird): Promise<string> => {
 
-      await ig.publish.photo({
-        file: await readFileAsync(imgPath),
-        caption: `\n\n${jailbird.name}, ${jailbird.age}: \n\n${jailbird.facility} \n\n${jailbird.charges} \n\n${jailbird.hashtags.join(', ')}`,
-      });
-      
-      fs.unlink(imgPath, (err) => {
-        if (err) {
-          logMessage(`An error occurred ${err}`)
-          return;
-        }
-        logMessage(`${imgPath} deleted successfully`);
-      });
-      
-      const result = await updateJailbird(jailbird?.inmateID, { isPosted: true });
-      resolve(result);
-    } catch (e: any) {
-      logErrorAndDeleteJB(jailbird);
-      reject(e);
+  const formattedName = jailbird.name.replace(/\s+/g, '_');
+  const fileName = `${formattedName}_${Date.now()}.jpg`;
+
+  const outputDir = path.resolve('./out/images');
+
+  if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir, { recursive: true });
+  }
+
+  const filePath = path.join(outputDir, fileName);
+
+  await base64ToImage(jailbird.picture, filePath);
+
+  const publicUrl = `${config.publicImageBaseUrl}/${fileName}`;
+
+  logMessage(`Image hosted at ${publicUrl}`);
+
+  return publicUrl;
+};
+
+const createMediaContainer = async (imageUrl: string, caption: string) => {
+  const url = `${GRAPH_BASE}/${config.ig.igUserId}/media`;
+
+  const res = await axios.post(url, null, {
+    params: {
+      image_url: imageUrl,
+      caption,
+      access_token: config.ig.accessToken
     }
   });
 
-  return localPostPromise;
-}
-
-const performUrlPost = async (ig, imageBuffer, jailbird: Jailbird) => {
-  try {
-    logMessage(`Posting ${jailbird.name} to instagram.`);
-    
-    await ig.publish.photo({
-      file: imageBuffer,
-      caption: `\n\n${jailbird.name}, ${jailbird.age}: \n\n${jailbird.facility} \n\n${jailbird.charges} \n\n${jailbird.hashtags.join(', ')}`
-    });
-
-    return await updateJailbird(jailbird?.inmateID, { isPosted: true });
-  } catch (e: any) {
-    logErrorAndDeleteJB(jailbird);
-  }
+  return res.data.id;
 };
 
-const getImageBuffer = async (jailbird: Jailbird): Promise<object | undefined> => {
-  try {
-    return await get({
-      url: jailbird.picture,
-      encoding: null, 
+const waitForContainerReady = async (creationId: string) => {
+
+  const url = `${GRAPH_BASE}/${creationId}`;
+
+  for (let i = 0; i < 30; i++) {
+
+    const res = await axios.get(url, {
+      params: {
+        fields: "status_code",
+        access_token: config.ig.accessToken
+      }
     });
+
+    const status = res.data.status_code;
+
+    logMessage(`IG container ${creationId} status: ${status}`);
+
+    if (status === "FINISHED") return;
+
+    if (status === "ERROR") {
+      throw new Error("Instagram container processing failed");
+    }
+
+    await sleep(3000);
+  }
+
+  throw new Error("Instagram container timeout");
+};
+
+const publishMedia = async (creationId: string) => {
+
+  await waitForContainerReady(creationId);
+
+  const url = `${GRAPH_BASE}/${config.ig.igUserId}/media_publish`;
+
+  const res = await axios.post(url, null, {
+    params: {
+      creation_id: creationId,
+      access_token: config.ig.accessToken
+    }
+  });
+
+  return res.data;
+};
+
+const performPost = async (jailbird: Jailbird) => {
+
+  try {
+
+    logMessage(`Posting ${jailbird.name} to Instagram.`);
+
+    let imageUrl = jailbird.picture;
+
+    if (!isValidHttpUrl(imageUrl)) {
+      imageUrl = await uploadBase64AndGetUrl(jailbird);
+    }
+
+    const caption = buildCaption(jailbird);
+
+    const containerId = await createMediaContainer(imageUrl, caption);
+
+    logMessage(`Container created: ${containerId}`);
+
+    await publishMedia(containerId);
+
+    await updateJailbird(jailbird.inmateID, { isPosted: true });
+
+    logMessage(`Successfully posted ${jailbird.name}`);
+
   } catch (e: any) {
-    logMessage(e.message);
-    logMessage(`Encountered error while getting image buffer.  Deleting problematic jailbird.`);
-    deleteJailbird(jailbird);
+
+    console.error("Instagram Error:", e?.response?.data || e.message);
+
+    await logErrorAndDeleteJB(jailbird);
   }
 };
 
 const postJailbirdById = async (inmateId: string) => {
+
   const jailbirdToPost = await findJailbirdByInmateId(inmateId);
-  const ig = new IgApiClient();
-  ig.state.generateDevice(config.ig.username);
-  await ig.account.login(config.ig.username, config.ig.password);
-  
-  if (isValidHttpUrl(jailbirdToPost.picture)) {
-    const imageBuffer = await getImageBuffer(jailbirdToPost);
-    await performUrlPost(ig, imageBuffer, jailbirdToPost);
-  } else {
-    await performLocalPost(ig, jailbirdToPost);
-  }  
-}
+
+  if (!jailbirdToPost) return;
+
+  await performPost(jailbirdToPost);
+};
 
 const postBatchToInsta = async () => {
-  const BATCH_SIZE = randomIntFromInterval(+config.minJailbirdsCount, +config.maxJailbirdsCount);
-  logMessage(`Beginning to post ${BATCH_SIZE} jailbirds to instagram.`);
+
+  const BATCH_SIZE = randomIntFromInterval(
+    +config.minJailbirdsCount,
+    +config.maxJailbirdsCount
+  );
+
+  logMessage(`Beginning to post ${BATCH_SIZE} jailbirds to Instagram.`);
 
   const unpostedJailbirds: Jailbird[] = await findUnpostedJailbirds();
-  const unpostedAndShuffledJBs: Jailbird[] = shuffle(unpostedJailbirds);
-  const jailbirdsToPost = unpostedAndShuffledJBs.slice(0, BATCH_SIZE)
 
-  return new Promise<void>(async (finishPosting) => {
-    const ig = new IgApiClient();
-    ig.state.generateDevice(config.ig.username);
-    await ig.account.login(config.ig.username, config.ig.password);
+  const shuffled = shuffle(unpostedJailbirds);
 
-    for (let i = 0; i < jailbirdsToPost.length; i++) {
-      // wait 30 minutes to an hour between posts
-      const randomWaitTime = randomIntFromInterval(
-        +config.lowerWaitTimeBoundary, 
-        +config.upperWaitTimeBoundary
-      );
-      logMessage(`Waiting ${randomWaitTime} ms before posting.`);
-      
-      await new Promise<void>(done => setTimeout(async () => {
-        if (isValidHttpUrl(jailbirdsToPost[i].picture)) {
-          const imageBuffer = await getImageBuffer(jailbirdsToPost[i]); 
-          performUrlPost(ig, imageBuffer, jailbirdsToPost[i]).then(() => {
-            done();
-          });
-        } else {
-          performLocalPost(ig, jailbirdsToPost[i]).then(() => {
-            done();
-          });
-        }
-      }, randomWaitTime));
-            
-    }
+  const jailbirdsToPost = shuffled.slice(0, BATCH_SIZE);
 
-    finishPosting();
-  });
-}
+  for (let i = 0; i < jailbirdsToPost.length; i++) {
 
-module.exports = { 
+    const randomWaitTime = randomIntFromInterval(
+      +config.lowerWaitTimeBoundary,
+      +config.upperWaitTimeBoundary
+    );
+
+    logMessage(`Waiting ${randomWaitTime} ms before posting.`);
+
+    await sleep(randomWaitTime);
+
+    await performPost(jailbirdsToPost[i]);
+  }
+};
+
+module.exports = {
   postBatchToInsta,
   postJailbirdById
 };
