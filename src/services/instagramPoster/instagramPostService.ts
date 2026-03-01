@@ -1,7 +1,6 @@
 import axios from 'axios';
-import fs from 'fs';
-import path from 'path';
 import { Jailbird } from "../../app";
+import { delayMs } from '../delayService';
 
 const config = require('../../utils/environment');
 
@@ -14,197 +13,133 @@ const {
 
 const { shuffle } = require('../shuffleService');
 const { logMessage } = require('../loggerService');
-const { base64ToImage } = require("./base64ToImgService");
 
-const GRAPH_BASE = "https://graph.facebook.com/v19.0";
+const GRAPH_API_VERSION = 'v21.0'; // Check the latest version on [Meta for Developers](https://developers.facebook.com)
 
 const randomIntFromInterval = (min: number, max: number) =>
   Math.floor(Math.random() * (max - min + 1) + min);
 
-const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+const buildPostCaption = (jailbird: Jailbird): string => 
+  `${jailbird.name}\n\n${jailbird.facility}\n\n${jailbird.charges}`;
 
-const isValidHttpUrl = (string: string) => {
+const createMediaContainer = async (jailbird: Jailbird): Promise<string> => {
+
+  const url = `https://graph.instagram.com/${GRAPH_API_VERSION}/${config.ig.userId}/media`;
+
   try {
-    new URL(string);
-    return true;
-  } catch {
-    return false;
-  }
-};
 
-const logErrorAndDeleteJB = (jailbird: Jailbird) => {
-  logMessage(
-    `Encountered error while posting to instagram. Deleting problematic jailbird with ID ${jailbird?.inmateID}.`
-  );
-  return deleteJailbird(jailbird._id.toString());
-};
-
-const buildCaption = (jailbird: Jailbird) => {
-  return (
-    `\n\n${jailbird.name}, ${jailbird.age}: \n\n` +
-    `${jailbird.facility} \n\n` +
-    `${jailbird.charges} \n\n` +
-    `${jailbird.hashtags.join(' ')}`
-  );
-};
-
-/**
- * Converts base64 image to a public URL
- * Replace hosting logic if needed (S3 recommended)
- */
-const uploadBase64AndGetUrl = async (jailbird: Jailbird): Promise<string> => {
-
-  const formattedName = jailbird.name.replace(/\s+/g, '_');
-  const fileName = `${formattedName}_${Date.now()}.jpg`;
-
-  const outputDir = path.resolve('./out/images');
-
-  if (!fs.existsSync(outputDir)) {
-    fs.mkdirSync(outputDir, { recursive: true });
-  }
-
-  const filePath = path.join(outputDir, fileName);
-
-  await base64ToImage(jailbird.picture, filePath);
-
-  const publicUrl = `${config.publicImageBaseUrl}/${fileName}`;
-
-  logMessage(`Image hosted at ${publicUrl}`);
-
-  return publicUrl;
-};
-
-const createMediaContainer = async (imageUrl: string, caption: string) => {
-  const url = `${GRAPH_BASE}/${config.ig.igUserId}/media`;
-
-  const res = await axios.post(url, null, {
-    params: {
-      image_url: imageUrl,
-      caption,
+    const response = await axios.post(url, {
+      image_url: jailbird.picture,
+      caption: buildPostCaption(jailbird),
       access_token: config.ig.accessToken
-    }
-  });
-
-  return res.data.id;
-};
-
-const waitForContainerReady = async (creationId: string) => {
-
-  const url = `${GRAPH_BASE}/${creationId}`;
-
-  for (let i = 0; i < 30; i++) {
-
-    const res = await axios.get(url, {
-      params: {
-        fields: "status_code",
-        access_token: config.ig.accessToken
-      }
     });
 
-    const status = res.data.status_code;
+    const containerId = response.data.id;
 
-    logMessage(`IG container ${creationId} status: ${status}`);
+    logMessage(`Media Container ID: ${containerId}`);
 
-    if (status === "FINISHED") return;
+    return containerId;
 
-    if (status === "ERROR") {
-      throw new Error("Instagram container processing failed");
-    }
+  } catch (error: any) {
 
-    await sleep(3000);
+    const metaError = error?.response?.data || error.message;
+
+    logMessage(`Create container failed: ${JSON.stringify(metaError)}`);
+
+    throw error;
   }
-
-  throw new Error("Instagram container timeout");
 };
 
-const publishMedia = async (creationId: string) => {
+// 2. Publish the container
+const publishMedia = async (containerId: string) => {
 
-  await waitForContainerReady(creationId);
+  const url = `https://graph.instagram.com/${GRAPH_API_VERSION}/${config.ig.userId}/media_publish`;
 
-  const url = `${GRAPH_BASE}/${config.ig.igUserId}/media_publish`;
+  try {
 
-  const res = await axios.post(url, null, {
-    params: {
-      creation_id: creationId,
+    const response = await axios.post(url, {
+      creation_id: containerId,
       access_token: config.ig.accessToken
-    }
-  });
+    });
 
-  return res.data;
+    const mediaId = response.data.id;
+
+    logMessage(`Media published: ${mediaId}`);
+
+    return mediaId;
+
+  } catch (error: any) {
+
+    const metaError = error?.response?.data || error.message;
+
+    logMessage(`Publish failed: ${JSON.stringify(metaError)}`);
+
+    throw error;
+  }
 };
 
 const performPost = async (jailbird: Jailbird) => {
 
   try {
 
-    logMessage(`Posting ${jailbird.name} to Instagram.`);
+    const containerId = await createMediaContainer(jailbird);
 
-    let imageUrl = jailbird.picture;
-
-    if (!isValidHttpUrl(imageUrl)) {
-      imageUrl = await uploadBase64AndGetUrl(jailbird);
-    }
-
-    const caption = buildCaption(jailbird);
-
-    const containerId = await createMediaContainer(imageUrl, caption);
-
-    logMessage(`Container created: ${containerId}`);
+    await delayMs(2000);
 
     await publishMedia(containerId);
 
-    await updateJailbird(jailbird.inmateID, { isPosted: true });
+    await updateJailbird(jailbird?.inmateID, { isPosted: true });
 
-    logMessage(`Successfully posted ${jailbird.name}`);
+    logMessage('Image upload and publishing complete!');
 
-  } catch (e: any) {
+  } catch (error: any) {
 
-    console.error("Instagram Error:", e?.response?.data || e.message);
+    logMessage(`Upload failed: ${error.message}`);
 
-    await logErrorAndDeleteJB(jailbird);
+    deleteJailbird(jailbird._id);
   }
 };
 
-const postJailbirdById = async (inmateId: string) => {
-
-  const jailbirdToPost = await findJailbirdByInmateId(inmateId);
-
-  if (!jailbirdToPost) return;
-
-  await performPost(jailbirdToPost);
+const postJailbirdById = async (inmateID: string) => {
+  try {
+    const jailbird: Jailbird = await findJailbirdByInmateId(inmateID);
+    await performPost(jailbird);
+  } catch (error: any) {
+    logMessage(`An error occurred while posting jailbird with ID ${inmateID}: ${error.message}`);
+  }
 };
 
 const postBatchToInsta = async () => {
-
   const BATCH_SIZE = randomIntFromInterval(
     +config.minJailbirdsCount,
     +config.maxJailbirdsCount
   );
 
-  logMessage(`Beginning to post ${BATCH_SIZE} jailbirds to Instagram.`);
+  logMessage(`Beginning to post ${BATCH_SIZE} jailbirds to instagram.`);
 
-  const unpostedJailbirds: Jailbird[] = await findUnpostedJailbirds();
+  try {
+    const unpostedJailbirds: Jailbird[] = await findUnpostedJailbirds();
+    const unpostedAndShuffledJBs: Jailbird[] = shuffle(unpostedJailbirds);
+    const jailbirdsToPost = unpostedAndShuffledJBs.slice(0, BATCH_SIZE);
 
-  const shuffled = shuffle(unpostedJailbirds);
+    for (let i = 0; i < jailbirdsToPost.length; i++) {
+      const randomWaitTime = randomIntFromInterval(
+        +config.lowerWaitTimeBoundary, 
+        +config.upperWaitTimeBoundary
+      );
+      logMessage(`Waiting ${randomWaitTime} ms before posting.`);
 
-  const jailbirdsToPost = shuffled.slice(0, BATCH_SIZE);
-
-  for (let i = 0; i < jailbirdsToPost.length; i++) {
-
-    const randomWaitTime = randomIntFromInterval(
-      +config.lowerWaitTimeBoundary,
-      +config.upperWaitTimeBoundary
-    );
-
-    logMessage(`Waiting ${randomWaitTime} ms before posting.`);
-
-    await sleep(randomWaitTime);
-
-    await performPost(jailbirdsToPost[i]);
+      // await delayMs(randomWaitTime);
+      // await createMediaContainer(jailbirdsToPost[i]);
+      await performPost(jailbirdsToPost[i]);
+      
+    }
+  } catch (e: any) {
+    logMessage(`Encountered error while posting batch to instagram: ${e}`);
   }
-};
+}
 
-module.exports = {
+export {
   postBatchToInsta,
   postJailbirdById
-};
+}

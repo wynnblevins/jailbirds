@@ -9,7 +9,7 @@ const {
 } = require("./services/jailbirdService");
 import { buildJailbirds as buildHenricoJailbirds } from './services/henricoScraper/henricoScraperService';
 import { buildJailbirds as buildRichmondJailbirds } from './services/richmondScraper/richmondScraperService';
-const { postBatchToInsta, postJailbirdById } = require('./services/instagramPoster/instagramPostService');
+const { postBatchToInsta } = require('./services/instagramPoster/instagramPostService');
 import { logMessage } from './services/loggerService';
 import { Types } from 'mongoose';
 
@@ -117,16 +117,16 @@ const performBatchPost = async () => {
   pruneDB();
 
   // scrape the jail webpages and update the database
-  try {
-    await scrapeWebpages();
-  } catch (e: any) {
-    logMessage(`Encountered error while getting the list of Jailbirds: ${e}`);
-  }
+  // try {
+  //   await scrapeWebpages();
+  // } catch (e: any) {
+  //   logMessage(`Encountered error while getting the list of Jailbirds: ${e}`);
+  // }
 
   // remaining jbs in DB will be what we want to post to instagram, do that here
   
   // TODO: uncomment this code
-  // return await postBatchToInsta();
+  return await postBatchToInsta();
 };
 
 // check if we are performing the nightly batch or a manual run

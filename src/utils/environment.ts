@@ -11,8 +11,8 @@ module.exports = {
     upperSearchCount: process.env.MAX_RICHMOND_JB_SEARCHES
   },
   ig: {
-    username: process.env.IG_USERNAME,
-    password: process.env.IG_PASSWORD
+    userId: process.env.IG_USER_ID,
+    accessToken: process.env.IG_ACCESS_TOKEN
   },
   db: {
     name: process.env.DATABASE_NAME,
