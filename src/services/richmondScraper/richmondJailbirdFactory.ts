@@ -82,7 +82,7 @@ const getAge = (jailbirdData: string[]): number => {
 };
 
 const buildJailbird = async (page): Promise<Jailbird> => {
-  let jailbird: Jailbird = null;
+  let jailbird: Jailbird | null = null;
 
   // scrape table data which contains jailbird details
   const tableData = await scrapeTable(page);
@@ -96,7 +96,7 @@ const buildJailbird = async (page): Promise<Jailbird> => {
 
     // build out charge strings for jailbird
     const chargesArr: string[] = await page.$$('.col-12.table.table-striped.table-hover > h5', (h5s) =>
-      h5s.map((h5) => {
+      h5s.map((h5: any) => {
           return h5.innerText;
       })
     );

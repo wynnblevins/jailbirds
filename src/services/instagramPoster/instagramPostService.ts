@@ -129,8 +129,8 @@ const postBatchToInsta = async () => {
       );
       logMessage(`Waiting ${randomWaitTime} ms before posting.`);
 
-      // await delayMs(randomWaitTime);
-      // await createMediaContainer(jailbirdsToPost[i]);
+      await delayMs(randomWaitTime);
+      
       await performPost(jailbirdsToPost[i]);
       
     }
