@@ -20,7 +20,7 @@ const randomIntFromInterval = (min: number, max: number) =>
   Math.floor(Math.random() * (max - min + 1) + min);
 
 const buildPostCaption = (jailbird: Jailbird): string => 
-  `${jailbird.name}\n\n${jailbird.facility}\n\n${jailbird.charges}`;
+  `${jailbird.name}, ${jailbird.age}:\n\n${jailbird.facility}\n\n${jailbird.charges}`;
 
 const createMediaContainer = async (jailbird: Jailbird): Promise<string> => {
 
