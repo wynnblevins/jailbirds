@@ -12,7 +12,7 @@ const { getFirstNames, getLastNames } = require('../../utils/names');
 const config = require('../../utils/environment');
 
 export const buildJailbirds = async (): Promise<Jailbird[]> => {
-  let firstNameBrowser = null, lastNameBrowser = null;
+  let firstNameBrowser: any = null, lastNameBrowser: any = null;
   
   const jailbirdsPromise = new Promise<Jailbird[]>(async (resolve, reject) => {
     try {
@@ -99,7 +99,7 @@ export const buildJailbirds = async (): Promise<Jailbird[]> => {
   return jailbirdsPromise;
 };
 
-const loadPage = async (page) => {
+const loadPage = async (page: Page) => {
   try {
     await page.goto(JAIL_URLS.RICHMOND_CITY_JAIL, {
       waitUntil: 'load',
@@ -112,13 +112,13 @@ const loadPage = async (page) => {
   }
 };
 
-const getRandomSubset = (arr, size) => {
+const getRandomSubset = (arr: any[], size: number) => {
   const shuffled = [...arr].sort(() => 0.5 - Math.random());
   return shuffled.slice(0, size);
 }
 
 const waitUntilElWithTextIsHidden = async (
-  page, selector, text, timeout = 5000
+  page: Page, selector: string, text: string, timeout = 5000
 ) => {  
   await page.waitForFunction(
     (selector, text) => {
@@ -289,7 +289,7 @@ const doSearch = async (page: Page, name: string, searchBoxID: string): Promise<
  * @param btnText the text of the button to search for
  * @returns an array of buttons that match the provided text
  */
-const getButtonsByText = async (page, btnText: string) => {
+const getButtonsByText = async (page: Page, btnText: string) => {
   const resultBtns = [];
   const viewButtons = await getViewButtons(page);
   for (let i = 0; i < viewButtons.length; i++) {
@@ -309,7 +309,7 @@ const getButtonsByText = async (page, btnText: string) => {
  * @param page 
  * @returns an array of puppeteer buttons for the given page
  */
-const getViewButtons = async (page) => {
+const getViewButtons = async (page: Page) => {
   const viewButtonsSelector = '.btn.btn-primary';
   const viewButtons = await page.$$(viewButtonsSelector);
   return viewButtons;

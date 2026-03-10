@@ -11,8 +11,8 @@ module.exports = {
     upperSearchCount: process.env.MAX_RICHMOND_JB_SEARCHES
   },
   ig: {
-    username: process.env.IG_USERNAME,
-    password: process.env.IG_PASSWORD
+    userId: process.env.IG_USER_ID,
+    accessToken: process.env.IG_ACCESS_TOKEN
   },
   db: {
     name: process.env.DATABASE_NAME,
@@ -22,5 +22,10 @@ module.exports = {
   },
   keys: {
     captchaAPIKey: process.env.CAPTCHA_KEY
+  },
+  cloudinary: {
+    apiKey: process.env.CLOUDINARY_API_KEY,
+    apiSecret: process.env.CLOUDINARY_API_SECRET,
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME
   }
 }

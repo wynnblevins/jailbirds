@@ -76,6 +76,8 @@ const scrapeWebpages = async (): Promise<Jailbird[]> => {
   } catch (e: any) {
     logMessage('Error encountered while waiting for promises to resolve.');
   }
+
+  return Promise.resolve([]);
 };
 
 /**
@@ -133,7 +135,7 @@ if (argv.m) {
     postJailbirdById(inmateIdStr).then(() => {
       logMessage("Program complete, stopping execution.")
       process.exit();
-    }).catch((e) => {
+    }).catch((e: any) => {
       logMessage(`Program encountered error while performing manual post: ${e}`);
       process.exit(1);
     });
@@ -150,7 +152,7 @@ if (argv.m) {
   logMessage('Starting cron job.');
   
   // if not running in manual mode, start the cron job
-  cron.schedule('0 15 * * *', () => {
+  cron.schedule('0 18 * * *', () => {
     performBatchPost().then(() => {
       logMessage('Program complete, stopping execution.');
     }).catch((e) => {
