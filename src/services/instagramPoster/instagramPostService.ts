@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Jailbird } from "../../app";
 import { delayMs } from '../delayService';
-
+const { upload } = require('../cloudinaryService')
 const config = require('../../utils/environment');
 
 const {
@@ -82,12 +82,22 @@ const performPost = async (jailbird: Jailbird) => {
 
   try {
 
+    console.log(jailbird.picture);
+    const url = new URL(jailbird.picture);
+    
+    // if we have a jailbird that uses a data: protocol image
+    if (url.protocol === 'data:') {
+      // upload to cloudinary and update the jailbird's picture URL to https
+      const jailbirdImgUrl = await upload(jailbird.picture);
+      jailbird.picture = jailbirdImgUrl
+    } 
+    
     const containerId = await createMediaContainer(jailbird);
 
-    await delayMs(2000);
+    await delayMs(3000);
 
     await publishMedia(containerId);
-
+  
     await updateJailbird(jailbird?.inmateID, { isPosted: true });
 
     logMessage('Image upload and publishing complete!');
