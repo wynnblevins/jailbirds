@@ -1,6 +1,8 @@
-import { Jailbird } from "../../app";
+import { Page } from "puppeteer";
+import { IJailbird } from "../../app";
 import { JAILS } from "../../utils/strings";
 import scrapeTable from "./richmondTableScraperService";
+import { buildChargesStr } from "./chargesStringBuilderService";
 
 /**
  * There seems to be a timing issue.  This function gets the first 
@@ -41,39 +43,7 @@ const getInmateIdStr = (jailbirdData: string[]): string => {
   return jailbirdData[INMATE_ID_NDX];
 };
 
-const buildChargesStr = async (charges): Promise<string> => {
-  let chargesStr = '';
-  const chargesMap = {};
-
-  // build a map of the current inmate's charges and their counts
-  for (let i = 0; i < charges.length; i++) {
-    const charge = charges[i];
-    let chargeHandle = await charge.getProperty('innerText');
-    let chargeText = await chargeHandle.jsonValue();
-    if (chargesMap.hasOwnProperty(chargeText)) {
-      chargesMap[chargeText]++; 
-    } else {
-      chargesMap[chargeText] = 1;
-    }
-  }
-
-  // append the charges into one long string
-  for (let charge in chargesMap) {
-    if (chargesMap[charge] > 1) {
-      chargesStr += `${charge} (x${chargesMap[charge]}), `;
-    } else {
-      chargesStr += `${charge}, `;
-    }
-  }
-
-  if (chargesStr.endsWith(', ')) {
-    chargesStr = chargesStr.slice(0, -2); 
-  }
-  
-  return chargesStr;
-};
-
-const getAge = (jailbirdData: string[]): number => {
+const getAge = (jailbirdData: string[]): number | null => {
   const ndx = jailbirdData.indexOf('Current Age:');
   if (ndx === -1) return null;
 
@@ -81,8 +51,8 @@ const getAge = (jailbirdData: string[]): number => {
   return Number.isNaN(age) ? null : age;
 };
 
-const buildJailbird = async (page): Promise<Jailbird> => {
-  let jailbird: Jailbird | null = null;
+const buildJailbird = async (page: Page): Promise<IJailbird | null> => {
+  let jailbird: IJailbird | null = null;
 
   // scrape table data which contains jailbird details
   const tableData = await scrapeTable(page);
@@ -95,7 +65,7 @@ const buildJailbird = async (page): Promise<Jailbird> => {
     const inmateId = getInmateIdStr(tableRowData);
 
     // build out charge strings for jailbird
-    const chargesArr: string[] = await page.$$('.col-12.table.table-striped.table-hover > h5', (h5s) =>
+    const chargesArr: string[] = await page.$$eval('.col-12.table.table-striped.table-hover > h5', (h5s) =>
       h5s.map((h5: any) => {
           return h5.innerText;
       })
@@ -125,8 +95,8 @@ const buildJailbird = async (page): Promise<Jailbird> => {
         inmateID: inmateId,
         name: name,
         picture: picture,
-        facility: JAILS.RICHMOND_CITY_JAIL,
-        age: age,
+        facility: JAILS.RICHMOND_CITY_JAIL || "",
+        age: age || undefined,
         timestamp: new Date(),
         isPosted: false,
         hashtags: [

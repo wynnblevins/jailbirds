@@ -1,5 +1,5 @@
 import { _ } from "lodash";
-import { Jailbird } from "../../app";
+import { IJailbird } from "../../app";
 import { JAILS, JAIL_URLS } from "../../utils/strings";
 import { logMessage } from "../loggerService/loggerService";
 import { selectFromMenu } from "../pageInteractions";
@@ -14,8 +14,8 @@ const removeNumbersFromCharge = (charges: string) => {
   return charges.replace(/\d{1,4} - /i, "");
 };
 
-const capitalizeStrings = (jailbirds: Jailbird[]): Jailbird[] => {
-  let capitalizedJailbirds: Jailbird[] = jailbirds.map((jailbird: Jailbird) => {
+const capitalizeStrings = (jailbirds: IJailbird[]): IJailbird[] => {
+  let capitalizedJailbirds: IJailbird[] = jailbirds.map((jailbird: IJailbird) => {
     jailbird.charges = jailbird.charges.toUpperCase();
     jailbird.name = jailbird.name.toUpperCase();
     return jailbird;
@@ -24,7 +24,7 @@ const capitalizeStrings = (jailbirds: Jailbird[]): Jailbird[] => {
   return capitalizedJailbirds;
 };
 
-const filterJbs = async (unfilteredJbs: Jailbird[]): Promise<Jailbird[]> => {
+const filterJbs = async (unfilteredJbs: IJailbird[]): Promise<IJailbird[]> => {
   // ...filter the jailbirds we already know about
   const allDbJailbirds = await findAllJailbirds();
   let filteredJbs = filterSavedJailbirds(allDbJailbirds, unfilteredJbs);
@@ -56,11 +56,11 @@ const getIdFromImage = (inmatePicUrl: string): string => {
  * @param nonUniqueJailbirds a list of jailbirds with multiple instances of the same person 
  * @returns a list of inmates with the charges consolidated into one list
  */
-const mergeJailbirdsIntoUnique = (nonUniqueJailbirds: Jailbird[]): Jailbird[] => {
-  const uniqueJailbirds: Jailbird[] = []
+const mergeJailbirdsIntoUnique = (nonUniqueJailbirds: IJailbird[]): IJailbird[] => {
+  const uniqueJailbirds: IJailbird[] = []
   
   nonUniqueJailbirds.forEach(nonUniqueJailbird => {
-    const existingJailbird = uniqueJailbirds.find((jailbird: Jailbird) => { 
+    const existingJailbird = uniqueJailbirds.find((jailbird: IJailbird) => { 
       return jailbird.inmateID === nonUniqueJailbird.inmateID
     }); 
 
@@ -80,7 +80,7 @@ const mergeJailbirdsIntoUnique = (nonUniqueJailbirds: Jailbird[]): Jailbird[] =>
  * @returns a promise that resolves when the page scraping is complete
  */
 export const buildJailbirds = async (): Promise<any> => {
-  let jailbirds: Jailbird[] = [];
+  let jailbirds: IJailbird[] = [];
   let page = null;
 
   // open up a headless chrome
@@ -150,7 +150,7 @@ export const buildJailbirds = async (): Promise<any> => {
   for (let i = 0, j = 0; i < jailbirdSpans?.length; i += 8, j++) {
     const inmateID = getIdFromImage(jailbirdPics[j]);
     
-    const jailbird: Jailbird = {
+    const jailbird: IJailbird = {
       charges: removeNumbersFromCharge(jailbirdSpans[i + 3]),
       inmateID: inmateID,
       name: jailbirdSpans[i],

@@ -1,5 +1,5 @@
 import { Page } from "puppeteer";
-import { Jailbird } from "../../app";
+import { IJailbird } from "../../app";
 import { logMessage } from "../loggerService";
 import { JAILS, JAIL_URLS } from "../../utils/strings";
 import { launchBrowser } from "../browserLaunchService/browserLauncherService";
@@ -11,10 +11,10 @@ const { getRandNumInRange } = require('../randomNumberService');
 const { getFirstNames, getLastNames } = require('../../utils/names');
 const config = require('../../utils/environment');
 
-export const buildJailbirds = async (): Promise<Jailbird[]> => {
+export const buildJailbirds = async (): Promise<IJailbird[]> => {
   let firstNameBrowser: any = null, lastNameBrowser: any = null;
   
-  const jailbirdsPromise = new Promise<Jailbird[]>(async (resolve, reject) => {
+  const jailbirdsPromise = new Promise<IJailbird[]>(async (resolve, reject) => {
     try {
       // We'll do first and last name searches in parallel
       logMessage('Launching headless browsers for Richmond page.', JAILS.RICHMOND_CITY_JAIL)
@@ -54,7 +54,7 @@ export const buildJailbirds = async (): Promise<Jailbird[]> => {
       const FIRST_NAME_SEARCH_BOX_ID = "#searchFirstName";
       const firstNames = getFirstNames();
       await firstNamePage.bringToFront();
-      const firstNameJBPromise: Promise<Jailbird[]> = doJBSearches(
+      const firstNameJBPromise: Promise<IJailbird[]> = doJBSearches(
         firstNamePage, 
         firstNames, 
         FIRST_NAME_SEARCH_BOX_ID
@@ -64,7 +64,7 @@ export const buildJailbirds = async (): Promise<Jailbird[]> => {
       const LAST_NAME_SEARCH_BOX_ID = "#searchLastName";
       const lastNames = getLastNames();
       await lastNamePage.bringToFront();
-      const lastNameJBPromise: Promise<Jailbird[]> = doJBSearches(
+      const lastNameJBPromise: Promise<IJailbird[]> = doJBSearches(
         lastNamePage, 
         lastNames, 
         LAST_NAME_SEARCH_BOX_ID
@@ -103,7 +103,7 @@ const loadPage = async (page: Page) => {
   try {
     await page.goto(JAIL_URLS.RICHMOND_CITY_JAIL, {
       waitUntil: 'load',
-      timeout: 10000,
+      timeout: 480000,
     });
   } catch (e: any) {
     logMessage(
@@ -131,8 +131,8 @@ const waitUntilElWithTextIsHidden = async (
   );
 };
 
-const doJBSearches = async (page: Page, names: string[], searchFieldID: string): Promise<Jailbird[]> => {
-  let webpageJailbirds: Jailbird[] = [];
+const doJBSearches = async (page: Page, names: string[], searchFieldID: string): Promise<IJailbird[]> => {
+  let webpageJailbirds: IJailbird[] = [];
   
   const upper = +config.richmond.upperSearchCount;
   const lower = +config.richmond.lowerSearchCount;
@@ -146,7 +146,7 @@ const doJBSearches = async (page: Page, names: string[], searchFieldID: string):
   );
   for (let i = 0; i < namesSubset.length; i++) {
     try {
-      const jailbirds: Jailbird[] = await doSearch(
+      const jailbirds: IJailbird[] = await doSearch(
         page, 
         namesSubset[i], 
         searchFieldID
@@ -172,8 +172,8 @@ const doJBSearches = async (page: Page, names: string[], searchFieldID: string):
  * @param searchBoxID the ID of the search field on the page
  * @returns a promise for a list of parsed jailbird objects for a given name 
  */
-const doSearch = async (page: Page, name: string, searchBoxID: string): Promise<Jailbird[]> => {
-  let webpageJailbirds: Jailbird[] = [];
+const doSearch = async (page: Page, name: string, searchBoxID: string): Promise<IJailbird[]> => {
+  let webpageJailbirds: IJailbird[] = [];
 
   // element selectors
   const OFFENDER_DETAILS_ID = '#detailsOfOffender';

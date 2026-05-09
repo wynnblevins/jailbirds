@@ -1,4 +1,4 @@
-import { Jailbird } from "../../app";
+import { IJailbird } from "../../app";
 import { createDummyJailbird } from "../../testUtils/mockDataGenerator";
 import { 
   filterSavedJailbirds,
@@ -16,7 +16,7 @@ describe('jailbirdFilterService', () => {
   let dummyJailbird7;
   let dummyJailbird8;
   let dummyJailbird9;  
-  let allJailbirds: Jailbird[];
+  let allJailbirds: IJailbird[]
   
   beforeEach(() => {
     allJailbirds = [];
@@ -55,7 +55,7 @@ describe('jailbirdFilterService', () => {
       const CONTEMPT_OF_COURT = 'OTHER OFFENSES-CONTEMPT OF COURT';
       const resultJBs = filterBoringJailbirds(allJailbirds, CONTEMPT_OF_COURT);
       expect(resultJBs.length).toEqual(expectedResultLength);
-      resultJBs.forEach((jb: Jailbird) => {
+      resultJBs.forEach((jb: IJailbird) => {
         expect(jb.charges).not.toEqual(CONTEMPT_OF_COURT)
       });
     });

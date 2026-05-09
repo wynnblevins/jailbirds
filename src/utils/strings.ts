@@ -1,5 +1,5 @@
 
-export type JAIL_NAME = 'RICHMOND_CITY_JAIL' | 'HENRICO_COUNTY_REGIONAL_JAIL';
+export type JAIL_NAME = 'RICHMOND_CITY_JAIL' | 'HENRICO_COUNTY_REGIONAL_JAIL' | 'JAIL_EAST' | 'JAIL_WEST';
 
 type JAIL_NAMES = {
     [K in JAIL_NAME]?: string
@@ -7,12 +7,15 @@ type JAIL_NAMES = {
 
 export const JAILS: JAIL_NAMES = {
   RICHMOND_CITY_JAIL: 'RICHMOND CITY JAIL',
-  HENRICO_COUNTY_REGIONAL_JAIL: 'HENRICO COUNTY REGIONAL JAIL' 
+  HENRICO_COUNTY_REGIONAL_JAIL: 'HENRICO COUNTY REGIONAL JAIL',
+  JAIL_EAST: 'JAIL EAST',
+  JAIL_WEST: 'JAIL WEST' 
 };
 
 export const JAIL_URLS = {
   RICHMOND_CITY_JAIL: 'https://omsweb.public-safety-cloud.com/jtclientweb/jailtracker/index/Richmond_Co_VA',
-  HENRICO_COUNTY_REGIONAL_JAIL: 'https://ppd.henrico.gov/searcharrest.aspx' 
+  HENRICO_COUNTY_REGIONAL_JAIL: 'https://ppd.henrico.gov/searcharrest.aspx',
+  JAIL_EAST_WEST: 'https://www.henricosheriff.org/search/' 
 };
 
 export const MIDLOTHIAN_CHARGES = {

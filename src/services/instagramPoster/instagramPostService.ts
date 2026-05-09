@@ -1,9 +1,8 @@
 import axios from 'axios';
-import { Jailbird } from "../../app";
+import { IJailbird } from "../../app";
 import { delayMs } from '../delayService';
 const { upload } = require('../cloudinaryService')
 const config = require('../../utils/environment');
-
 const {
   updateJailbird,
   findUnpostedJailbirds,
@@ -19,15 +18,20 @@ const GRAPH_API_VERSION = 'v21.0'; // Check the latest version on [Meta for Deve
 const randomIntFromInterval = (min: number, max: number) =>
   Math.floor(Math.random() * (max - min + 1) + min);
 
-const buildPostCaption = (jailbird: Jailbird): string => 
-  `${jailbird.name}, ${jailbird.age}:\n\n${jailbird.facility}\n\n${jailbird.charges}`;
-
-const createMediaContainer = async (jailbird: Jailbird): Promise<string> => {
+const buildPostCaption = (jailbird: IJailbird): string => {
+  if (!jailbird.age) {
+    // getting the jailbird age isn't a guarantee, handling that scenario here
+    return `${jailbird.name}:\n\n${jailbird.facility}\n\n${jailbird.charges}`;
+  }
+  
+  return `${jailbird.name}, ${jailbird.age}:\n\n${jailbird.facility}\n\n${jailbird.charges}`;
+}
+  
+const createMediaContainer = async (jailbird: IJailbird): Promise<string> => {
 
   const url = `https://graph.instagram.com/${GRAPH_API_VERSION}/${config.ig.userId}/media`;
 
   try {
-
     const response = await axios.post(url, {
       image_url: jailbird.picture,
       caption: buildPostCaption(jailbird),
@@ -52,11 +56,9 @@ const createMediaContainer = async (jailbird: Jailbird): Promise<string> => {
 
 // 2. Publish the container
 const publishMedia = async (containerId: string) => {
-
   const url = `https://graph.instagram.com/${GRAPH_API_VERSION}/${config.ig.userId}/media_publish`;
 
   try {
-
     const response = await axios.post(url, {
       creation_id: containerId,
       access_token: config.ig.accessToken
@@ -67,22 +69,15 @@ const publishMedia = async (containerId: string) => {
     logMessage(`Media published: ${mediaId}`);
 
     return mediaId;
-
   } catch (error: any) {
-
     const metaError = error?.response?.data || error.message;
-
     logMessage(`Publish failed: ${JSON.stringify(metaError)}`);
-
     throw error;
   }
 };
 
-const performPost = async (jailbird: Jailbird) => {
-
+const performPost = async (jailbird: IJailbird) => {
   try {
-
-    console.log(jailbird.picture);
     const url = new URL(jailbird.picture);
     
     // if we have a jailbird that uses a data: protocol image
@@ -95,24 +90,18 @@ const performPost = async (jailbird: Jailbird) => {
     const containerId = await createMediaContainer(jailbird);
 
     await delayMs(3000);
-
     await publishMedia(containerId);
-  
     await updateJailbird(jailbird?.inmateID, { isPosted: true });
-
     logMessage('Image upload and publishing complete!');
-
   } catch (error: any) {
-
-    logMessage(`Upload failed: ${error.message}`);
-
+    logMessage(`Upload failed: ${error.message}, deleting problematic jailbird`);
     deleteJailbird(jailbird._id);
   }
 };
 
 const postJailbirdById = async (inmateID: string) => {
   try {
-    const jailbird: Jailbird = await findJailbirdByInmateId(inmateID);
+    const jailbird: IJailbird = await findJailbirdByInmateId(inmateID);
     await performPost(jailbird);
   } catch (error: any) {
     logMessage(`An error occurred while posting jailbird with ID ${inmateID}: ${error.message}`);
@@ -128,8 +117,8 @@ const postBatchToInsta = async () => {
   logMessage(`Beginning to post ${BATCH_SIZE} jailbirds to instagram.`);
 
   try {
-    const unpostedJailbirds: Jailbird[] = await findUnpostedJailbirds();
-    const unpostedAndShuffledJBs: Jailbird[] = shuffle(unpostedJailbirds);
+    const unpostedJailbirds: IJailbird[] = await findUnpostedJailbirds();
+    const unpostedAndShuffledJBs: IJailbird[] = shuffle(unpostedJailbirds);
     const jailbirdsToPost = unpostedAndShuffledJBs.slice(0, BATCH_SIZE);
 
     for (let i = 0; i < jailbirdsToPost.length; i++) {

@@ -1,5 +1,5 @@
 import mockingoose from 'mockingoose';
-import { Jailbird } from "../app";
+import { IJailbird } from "../app";
 import { faker } from '@faker-js/faker';
 import { JAILS, MIDLOTHIAN_CHARGES, RICHMOND_CHARGES } from "../utils/strings";
 import mongoose from 'mongoose';
@@ -46,7 +46,7 @@ const POSSIBLE_JAILS = [
  * @param jailbird - the partial jailbird from which to populate the object
  * @returns a dummy jailbird for testing purposes
  */
-const createDummyJailbird = (jailbird?: Partial<Jailbird>): Jailbird => {
+const createDummyJailbird = (jailbird?: Partial<IJailbird>): IJailbird => {
   // depending on which jail we're in, build the appropriate charges string 
   let charges: string = '';
   const jail = faker.helpers.arrayElement(POSSIBLE_JAILS);
@@ -74,7 +74,7 @@ const createDummyJailbird = (jailbird?: Partial<Jailbird>): Jailbird => {
   }
 };
 
-const createDummyJailbirdWithId = (jailbird?: Partial<Jailbird>, _id?: mongoose.Types.ObjectId) => {
+const createDummyJailbirdWithId = (jailbird?: Partial<IJailbird>, _id?: mongoose.Types.ObjectId) => {
   const createdJailbird = createDummyJailbird(jailbird);
   const jbWithId = { 
     ...createdJailbird, 

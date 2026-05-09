@@ -9,11 +9,12 @@ const {
 } = require("./services/jailbirdService");
 import { buildJailbirds as buildHenricoJailbirds } from './services/henricoScraper/henricoScraperService';
 import { buildJailbirds as buildRichmondJailbirds } from './services/richmondScraper/richmondScraperService';
+import { buildJailbirds as buildRichmondEastWestJailbirds } from './services/jailEastWestScraper';
 const { postBatchToInsta, postJailbirdById } = require('./services/instagramPoster/instagramPostService');
 import { logMessage } from './services/loggerService';
 import { Types } from 'mongoose';
 
-interface Jailbird {
+interface IJailbird {
   _id?: Types.ObjectId,
   inmateID: string,
   name: string,
@@ -34,7 +35,7 @@ mongoose.connect(mongoURL);
  * 
  * @returns a promise for the jailbirds currently on the jail webpages
  */
-const scrapeWebpages = async (): Promise<Jailbird[]> => {
+const scrapeWebpages = async (): Promise<IJailbird[]> => {
   const scraperPromises: Promise<any>[] = [];
   
   // scrape the Richmond jail roster webpage
@@ -69,6 +70,22 @@ const scrapeWebpages = async (): Promise<Jailbird[]> => {
     );
   }
   
+// scrape the jail east/west web pages
+  logMessage(
+    "Scraping Richmond Jail East/West webpage...",
+    `${JAILS.JAIL_EAST}/${JAILS.JAIL_WEST}`
+  )
+
+  try {
+    const richmondEastWestJailbirdsPromise = buildRichmondEastWestJailbirds();
+    scraperPromises.push(richmondEastWestJailbirdsPromise);
+  } catch (e: any) {
+    logMessage(
+      "Error encountered while building Henrico East/West jailbirds", 
+      `${JAILS.JAIL_EAST}/${JAILS.JAIL_WEST}`
+    );
+  }
+
   let resolvedData = [];
   try {
     resolvedData = await Promise.all(scraperPromises);
@@ -162,4 +179,4 @@ if (argv.m) {
   });  
 }
 
-export { Jailbird };
+export { IJailbird };

@@ -1,4 +1,4 @@
-import { Jailbird as IJailbird } from "../../app";
+import { IJailbird } from "../../app";
 import { Jailbird } from "../../models";  
 
 const findAllJailbirds = async (): Promise<IJailbird[]> => {
@@ -11,7 +11,7 @@ const findJailbirdById = async (id: string) => {
   return await Jailbird.find({ _id: id });
 };
 
-const findJailbirdByInmateId = async (inmateID: string): Promise<IJailbird> => {
+const findJailbirdByInmateId = async (inmateID: string): Promise<IJailbird | null> => {
   return await Jailbird.findOne({ inmateID: inmateID });
 }
 
@@ -19,8 +19,10 @@ const findUnpostedJailbirds = async (): Promise<IJailbird[]> => {
   return await Jailbird.find({ isPosted: false });
 }
 
-const createMultipleJailbirds = async (jailbirds: IJailbird): Promise<any> => {
-  return await Jailbird.insertMany(jailbirds)
+const createMultipleJailbirds = async (
+  jailbirds: IJailbird[]
+): Promise<any[]> => {
+  return await Jailbird.insertMany(jailbirds);
 };
 
 /**

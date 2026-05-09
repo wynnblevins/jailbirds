@@ -1,14 +1,14 @@
-import { Jailbird } from "../../app";
+import { IJailbird } from "../../app";
 const {
   findJailbirdByInmateId
 } = require("../jailbirdService");
 
-const asyncFilter = async (arr, predicate) => {
+const asyncFilter = async (arr: any[], predicate: any) => {
   const results = await Promise.all(arr.map(predicate));
   return arr.filter((_v, index) => results[index]);
 }
 
-function containsJailbird(obj: Jailbird, list: Jailbird[]) {
+function containsJailbird(obj: IJailbird, list: IJailbird[]) {
   var i;
   for (i = 0; i < list.length; i++) {
       if (list[i]?.inmateID === obj?.inmateID) {
@@ -28,10 +28,10 @@ function containsJailbird(obj: Jailbird, list: Jailbird[]) {
  * @returns a filtered list of jailbirds
  */
 const filterSavedJailbirds = (
-  dbJailbirds: Jailbird[], 
-  webpageJailbirds: Jailbird[]
+  dbJailbirds: IJailbird[], 
+  webpageJailbirds: IJailbird[]
 ) => {
-  const result = webpageJailbirds.filter((webpageJailbird: Jailbird) => {
+  const result = webpageJailbirds.filter((webpageJailbird: IJailbird) => {
     const filter = !containsJailbird(webpageJailbird, dbJailbirds)
     return filter;
   })
@@ -45,20 +45,21 @@ const filterSavedJailbirds = (
  * @param jailbirds 
  * @returns a filtered list of jailbirds
  */
-const filterPostedJailbirds = async (jailbirds: Jailbird[]) => {
-  const asyncResult = await asyncFilter(jailbirds, 
-    async (jailbird: Jailbird) => {
-      const result: Jailbird = await findJailbirdByInmateId(jailbird?.inmateID);
+const filterPostedJailbirds = async (
+  jailbirds: IJailbird[]
+): Promise<IJailbird[]> =>
+  asyncFilter(
+    jailbirds,
+    async (jailbird: IJailbird) => {
+      const result = await findJailbirdByInmateId(
+        jailbird.inmateID
+      );
+
       return !result[0]?.isPosted;
     }
-  );  
-  
-  return new Promise<void>(async (done) => {  
-    done(asyncResult);
-  });
-};
+  );
 
-const chargesAreAll = (chargeToOmit: string, jailbird: Jailbird) => {
+const chargesAreAll = (chargeToOmit: string, jailbird: IJailbird) => {
   const charges = jailbird?.charges.split(',');
 
   for (let i = 0; i < charges.length; i++) {
@@ -77,7 +78,7 @@ const chargesAreAll = (chargeToOmit: string, jailbird: Jailbird) => {
  * @param boringCharge
  * @returns a filtered list of jailbirds
  */
-const filterBoringJailbirds = (jailbirds: Jailbird[], boringCharge: string) => {
+const filterBoringJailbirds = (jailbirds: IJailbird[], boringCharge: string) => {
   const filtered = jailbirds.filter((jb) => { 
     return !chargesAreAll(boringCharge, jb) 
   });
