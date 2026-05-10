@@ -52,11 +52,9 @@ const createMediaContainer = async (jailbird: Jailbird): Promise<string> => {
 
 // 2. Publish the container
 const publishMedia = async (containerId: string) => {
-
   const url = `https://graph.instagram.com/${GRAPH_API_VERSION}/${config.ig.userId}/media_publish`;
 
   try {
-
     const response = await axios.post(url, {
       creation_id: containerId,
       access_token: config.ig.accessToken
@@ -79,10 +77,7 @@ const publishMedia = async (containerId: string) => {
 };
 
 const performPost = async (jailbird: Jailbird) => {
-
   try {
-
-    console.log(jailbird.picture);
     const url = new URL(jailbird.picture);
     
     // if we have a jailbird that uses a data: protocol image
