@@ -1,188 +1,180 @@
-import { _ } from "lodash";
-import { Jailbird } from "../../app";
+import puppeteer from 'puppeteer';
+import { Types } from 'mongoose';
 import { JAILS, JAIL_URLS } from "../../utils/strings";
-import { logMessage } from "../loggerService/loggerService";
-import { selectFromMenu } from "../pageInteractions";
-import { launchBrowser } from "../browserLaunchService";
-import { filterBoringJailbirds, filterSavedJailbirds } from "../jailbirdFilterService";
-const {
-  createMultipleJailbirds,
-  findAllJailbirds,
-} = require("../jailbirdService");
+import { selectFromMenu } from '../pageInteractions';
+import { Jailbird } from '../../models';
+import { createMultipleJailbirdsIfTheyDontExist } from '../jailbirdService';
 
-const removeNumbersFromCharge = (charges: string) => {
-  return charges.replace(/\d{1,4} - /i, "");
-};
+export interface Jailbird {
+  _id?: Types.ObjectId;
+  inmateID: string;
+  name: string;
+  charges: string;
+  picture: string;
+  facility: string;
+  age: number;
+  timestamp: Date;
+  isPosted: boolean;
+  hashtags: string[];
+}
 
-const capitalizeStrings = (jailbirds: Jailbird[]): Jailbird[] => {
-  let capitalizedJailbirds: Jailbird[] = jailbirds.map((jailbird: Jailbird) => {
-    jailbird.charges = jailbird.charges.toUpperCase();
-    jailbird.name = jailbird.name.toUpperCase();
-    return jailbird;
+export async function buildJailbirds(): Promise<Jailbird[]> {
+  const browser = await puppeteer.launch({
+    headless: false
   });
-  
-  return capitalizedJailbirds;
-};
 
-const filterJbs = async (unfilteredJbs: Jailbird[]): Promise<Jailbird[]> => {
-  // ...filter the jailbirds we already know about
-  const allDbJailbirds = await findAllJailbirds();
-  let filteredJbs = filterSavedJailbirds(allDbJailbirds, unfilteredJbs);
+  try {
+    const page = await browser.newPage();
 
-  // ...and filter the boring jailbirds that nobody cares about
-  const CONTEMPT_OF_COURT = "OTHER OFFENSES-CONTEMPT OF COURT";
-  const PROBATION_VIOLATION = "OTHER OFFENSES-PROBATION VIOLATION";
-  filteredJbs = filterBoringJailbirds(filteredJbs, CONTEMPT_OF_COURT);
-  filteredJbs = filterBoringJailbirds(filteredJbs, PROBATION_VIOLATION);
+    await page.goto(JAIL_URLS.HENRICO_COUNTY_REGIONAL_JAIL, {
+      waitUntil: 'networkidle2'
+    });
 
-  filteredJbs = _.uniqBy(filteredJbs, "inmateID");
+    //
+    // Change records/page from 25 to 100
+    //
+    const oneHundred = '100';
+    const pageSizeSelectID = '#pageSizeSelect'
+    await page.waitForSelector(pageSizeSelectID);
+    await selectFromMenu(page, pageSizeSelectID, oneHundred)
 
-  return filteredJbs;
-};
+    // Allow table to refresh
+    await new Promise(resolve => setTimeout(resolve, 5000));
 
-/**
- * @param inmatePicUrl 
- * @returns the id of a henrico inmate
- */
-const getIdFromImage = (inmatePicUrl: string): string => {
-  const slashNdx = inmatePicUrl.lastIndexOf('/') + 1;
-  const pictureFilename = inmatePicUrl.substring(slashNdx);
-  const periodNdx = pictureFilename.indexOf('.');
-  const id = pictureFilename.substring(0, periodNdx);
-  return id;
-};
+    const jailbirds: Jailbird[] = await page.$$eval(
+      'tbody.table-group-divider tr',
+      rows =>
+        rows.map(row => {
+          const cells = row.querySelectorAll('td');
 
-/**
- * @param nonUniqueJailbirds a list of jailbirds with multiple instances of the same person 
- * @returns a list of inmates with the charges consolidated into one list
- */
-const mergeJailbirdsIntoUnique = (nonUniqueJailbirds: Jailbird[]): Jailbird[] => {
-  const uniqueJailbirds: Jailbird[] = []
-  
-  nonUniqueJailbirds.forEach(nonUniqueJailbird => {
-    const existingJailbird = uniqueJailbirds.find((jailbird: Jailbird) => { 
-      return jailbird.inmateID === nonUniqueJailbird.inmateID
-    }); 
+          // Mugshot URL
+          const picture =
+            row
+              .querySelector('source[type="image/jpeg"]')
+              ?.getAttribute('srcset') ?? '';
 
-    if (existingJailbird) {
-      existingJailbird.charges = existingJailbird.charges.concat(`, ${nonUniqueJailbird.charges}`);
+          // Extract inmate ID from the image URL
+          // "/mugshots/353739.jpg" -> "353739"
+          const inmateID =
+            picture.match(/\/(\d+)\.jpg$/)?.[1] ?? '';
+
+          // Name and age cell
+          const nameAndAgeLines = cells[2]?.innerText
+            .split('\n')
+            .map(line => line.trim())
+            .filter(Boolean) ?? [];
+
+          const name = nameAndAgeLines[0] ?? '';
+
+          const ageMatch = nameAndAgeLines[1]?.match(/\d+/);
+          const age = ageMatch ? Number(ageMatch[0]) : 0;
+
+          // Charge cell
+          const chargeLines = cells[3]?.innerText
+            .split('\n')
+            .map(line => line.trim())
+            .filter(Boolean) ?? [];
+
+          const charges = chargeLines.slice(0, -1).join('\n');
+
+          return {
+            inmateID,
+            name: name.toUpperCase(),
+            charges,
+            picture: `https://ppd.henrico.gov${picture}`,
+            facility: JAILS.HENRICO_COUNTY_REGIONAL_JAIL,
+            age,
+            timestamp: new Date(),
+            isPosted: false,
+            hashtags: [
+              '#jail',
+              '#jailbirds',
+              '#henricojail',
+              '#rva',
+              '#mugshots',
+            ]
+          };
+        })
+    );
+
+    const scrapedJailbirds = combineCharges(jailbirds);
+
+     createMultipleJailbirdsIfTheyDontExist(scrapedJailbirds)
+
+    return scrapedJailbirds;
+  } finally {
+    await browser.close();
+  }
+}
+
+const combineCharges = (jailbirds: Jailbird[]): Jailbird[] => {
+  const jailbirdMap = new Map<string, Jailbird>();
+
+  for (const jailbird of jailbirds) {
+    const existing = jailbirdMap.get(jailbird.inmateID);
+
+    if (!existing) {
+      jailbirdMap.set(jailbird.inmateID, structuredClone(jailbird));
     } else {
-      uniqueJailbirds.push(nonUniqueJailbird);
+      existing.charges += `\n${jailbird.charges}`;
     }
-  });
-  
-  return uniqueJailbirds;
+  }
+
+  return [...jailbirdMap.values()];
+}
+
+const getInmateIdFromMugshot = (mugshot: string): string => {
+  const mugshotImg = mugshot.split('/').slice(2)[0];
+  return mugshotImg.split('.')[0];
+};
+
+/**
+ * takes in a string like "32 years old" and returns 32
+ * 
+ * @returns the inmate's age as a number
+ */
+const getAge = (ageString: string): number => {  
+  return +ageString.split(' ')[0];
 }
 
 /**
- * scrapes the Henrico county jail page and stores new jailbirds in the database 
  * 
- * @returns a promise that resolves when the page scraping is complete
+ * @param jailbirdCells 
+ * @param i 
+ * @returns a single jailbird record for an individual charge
  */
-export const buildJailbirds = async (): Promise<any> => {
-  let jailbirds: Jailbird[] = [];
-  let page = null;
+const buildJailbird = (jailbirdCells: string[], mugshot: string): Jailbird => {
+  const nameAgeAndLocationNdx = 2;
+  const chargeNdx = 3;
 
-  // open up a headless chrome
-  logMessage(
-    'Launching headless browser for Henrico page.', 
-    JAILS.HENRICO_COUNTY_REGIONAL_JAIL
-  );
-  const browser = await launchBrowser(false);
-
-  // go to the Henrico jail page
-  try {
-    logMessage(
-      `Going to ${JAIL_URLS.HENRICO_COUNTY_REGIONAL_JAIL}`, 
-      JAILS.HENRICO_COUNTY_REGIONAL_JAIL
-    );
-    page = await browser.newPage();
-    await page.goto(JAIL_URLS.HENRICO_COUNTY_REGIONAL_JAIL, {
-      waitUntil: 'load',
-      timeout: 20000,
-    });
-  } catch (e: any) {
-    browser.close();
-    logMessage(`Error encountered while going to ${JAIL_URLS.HENRICO_COUNTY_REGIONAL_JAIL}: ${e}`);
-    throw new Error(e);
-  }
-
-  // click the search button
-  try {
-    logMessage('Clicking search button', JAILS.HENRICO_COUNTY_REGIONAL_JAIL);
-    const form = await page.$('#ctl00_SearchContent_btnSubmit');
-    // @ts-ignore
-    await form.evaluate( form => form.click() );
-  } catch (e: any) {
-    browser.close();
-    logMessage(`Error encountered while clicking the search button: ${e}`);
-    throw new Error(e);
-  }
+  // get the name and location for the current charge
+  const nameAgeAndLocation = jailbirdCells[nameAgeAndLocationNdx];
+  const splitNameAgeAndLocation = nameAgeAndLocation.split('\n');
+  const nameNdx = 0;
+  const ageNdx = 1;
+  const name = splitNameAgeAndLocation[nameNdx];
+  const ageString = splitNameAgeAndLocation[ageNdx];
   
+  // get the charge
+  const charge = jailbirdCells[chargeNdx];
 
-  // wait for the search modal to disappear from the screen
-  await page.waitForSelector('div.modalBody', {hidden: true});
-
-  // tell page to load up 100 results
-  try {
-    const menuSelector = "select[name='ctl00_SearchContent_gvData_length']";
-    await selectFromMenu(page, menuSelector, "100");
-  } catch (e: any) {
-    browser.close();
-    logMessage(`Error encountered while selecting the row count: ${e}`);
-    throw new Error(e);
+  const jb: Jailbird = {
+    inmateID: getInmateIdFromMugshot(mugshot),
+    name,
+    age: getAge(ageString), 
+    facility: JAILS.HENRICO_COUNTY_REGIONAL_JAIL,
+    charges: charge,
+    picture: `ppd.henrico.gov${mugshot}`,
+    timestamp: new Date(),
+    isPosted: false,
+    hashtags: [
+      '#jail',
+      '#jailbirds',
+      '#henricojail',
+      '#rva',
+      '#mugshots',
+    ]
   }
 
-  // Get all the inmate name span elements using page.$$
-  logMessage('Getting all jailbird names from page', JAILS.HENRICO_COUNTY_REGIONAL_JAIL);
-  const jailbirdSpans = await page.$$eval('table tr td span', spans => spans.map((span) => {
-    return span.innerText;
-  }));
-
-  // Get all the inmate photo img elements using page.$$
-  logMessage('Getting all jailbird pictures from page', JAILS.HENRICO_COUNTY_REGIONAL_JAIL);
-  const jailbirdPics = await page.$$eval('td > img', imgs => imgs.map((img) => {
-    return img.src;
-  }));
-
-  // Create jailbirds in memory using scraped elements
-  logMessage('Creating jailbirds in memory', JAILS.HENRICO_COUNTY_REGIONAL_JAIL);
-  for (let i = 0, j = 0; i < jailbirdSpans?.length; i += 8, j++) {
-    const inmateID = getIdFromImage(jailbirdPics[j]);
-    
-    const jailbird: Jailbird = {
-      charges: removeNumbersFromCharge(jailbirdSpans[i + 3]),
-      inmateID: inmateID,
-      name: jailbirdSpans[i],
-      picture: jailbirdPics[j],
-      facility: 'HENRICO COUNTY REGIONAL JAIL',
-      age: parseInt(jailbirdSpans[i + 1]),
-      timestamp: new Date(),
-      isPosted: false,
-      hashtags: [
-        '#jail',
-        '#jailbirds',
-        '#henricojail',
-        '#rva',
-        '#mugshots',
-      ]
-    };
-
-    jailbirds.push(jailbird);
-  }
-
-  jailbirds = mergeJailbirdsIntoUnique(jailbirds);
-  jailbirds = capitalizeStrings(jailbirds);
-
-  await browser.close();
-
-  // doing some refinement of what gets posted (ie don't 
-  // post things twice, don't post boring jbs, etc) 
-  const newJailbirds = await filterJbs(jailbirds);
-
-  logMessage(
-    `Creating ${newJailbirds?.length} jailbirds in the database`, 
-    JAILS.HENRICO_COUNTY_REGIONAL_JAIL
-  );
-  return await createMultipleJailbirds(newJailbirds);
+  return jb;
 };

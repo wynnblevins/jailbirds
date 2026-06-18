@@ -19,8 +19,39 @@ const findUnpostedJailbirds = async (): Promise<IJailbird[]> => {
   return await Jailbird.find({ isPosted: false });
 }
 
-const createMultipleJailbirds = async (jailbirds: IJailbird): Promise<any> => {
-  return await Jailbird.insertMany(jailbirds)
+const createMultipleJailbirdsIfTheyDontExist = async (jailbirds: IJailbird[]): Promise<any> => {
+  // Map your data array into a series of bulk write operations
+  const operations = jailbirds.map(jb => ({
+    updateOne: {
+      // 1. The unique criteria to check if the document already exists
+      filter: { inmateID: jb.inmateID }, 
+      
+      // 2. Fields to insert ONLY if no matching document is found
+      update: { 
+        $setOnInsert: { 
+          age: jb.age,
+          charges: jb.charges, 
+          inmateID: jb.inmateID,
+          name: jb.name,
+          picture: jb.picture,
+          facility: jb.facility,
+          hashtags: jb.hashtags
+        } 
+      }, 
+      
+      // 3. Enable upsert to create a document if the filter returns no results
+      upsert: true 
+    }
+  }));
+
+  try {
+    const result = await Jailbird.bulkWrite(operations);
+    console.log(`Upserted (Created): ${result.upsertedCount}`);
+    console.log(`Matched (Skipped): ${result.matchedCount}`);
+    return result;
+  } catch (error) {
+    console.error('Bulk write failed:', error);
+  }
 };
 
 /**
@@ -90,7 +121,7 @@ export {
   findJailbirdById,
   findUnpostedJailbirds,
   createJailbird,
-  createMultipleJailbirds,
+  createMultipleJailbirdsIfTheyDontExist,
   deleteJailbird,
   deleteOldJailbirds,
   deleteOldJailbirdsFromFacility,

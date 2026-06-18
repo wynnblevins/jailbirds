@@ -10,15 +10,15 @@ import { getHTMLElement } from "./htmlElementService";
  * @param menuSelector the CSS selector string to use in order to get the button
  * @param item the menu item to select
  * 
- * @returns a promise for the selected string
+ * @returns a promise for the selected string if found
  */
 const selectFromMenu = async (
   page: Page, 
   menuSelector: string, 
   item: string
-): Promise<string[]> => {
-  const rowsSelect = await page.waitForSelector(menuSelector);
-  return await rowsSelect.select(item);
+): Promise<string[] | undefined> => {
+  const selectBox = await page.waitForSelector(menuSelector);
+  return await selectBox?.select(item);
 };
 
 /**
@@ -32,7 +32,7 @@ const selectFromMenu = async (
 const clickButton = async (page: Page, buttonSelector: string) => {
   await page.waitForSelector(buttonSelector);
   const button = await getHTMLElement(page, buttonSelector);
-  return await button.click();
+  return await button?.click();
 }
 
 /**
@@ -59,8 +59,8 @@ const typeInField = async (
     logMessage(errorStr);
     throw new Error(errorStr);
   }
-  if (clearField) await textField.click({ clickCount: 3 });
-  return await textField.type(text);
+  if (clearField) await textField?.click({ clickCount: 3 });
+  return await textField?.type(text);
 };
 
 /**
@@ -73,8 +73,8 @@ const typeInField = async (
  */
 const clearTextInput = async (page: Page, fieldSelector: string) => {
   const textField = await getHTMLElement(page, fieldSelector);
-  await textField.click({ clickCount: 4 });
-  return await textField.type(String.fromCharCode(8));
+  await textField?.click({ clickCount: 4 });
+  return await textField?.type(String.fromCharCode(8));
 };
 
 /**

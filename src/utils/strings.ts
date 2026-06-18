@@ -2,7 +2,7 @@
 export type JAIL_NAME = 'RICHMOND_CITY_JAIL' | 'HENRICO_COUNTY_REGIONAL_JAIL';
 
 type JAIL_NAMES = {
-    [K in JAIL_NAME]?: string
+    [K in JAIL_NAME]: string
 }
 
 export const JAILS: JAIL_NAMES = {
@@ -12,7 +12,7 @@ export const JAILS: JAIL_NAMES = {
 
 export const JAIL_URLS = {
   RICHMOND_CITY_JAIL: 'https://omsweb.public-safety-cloud.com/jtclientweb/jailtracker/index/Richmond_Co_VA',
-  HENRICO_COUNTY_REGIONAL_JAIL: 'https://ppd.henrico.gov/searcharrest.aspx' 
+  HENRICO_COUNTY_REGIONAL_JAIL: 'https://ppd.henrico.gov/arrests' 
 };
 
 export const MIDLOTHIAN_CHARGES = {
