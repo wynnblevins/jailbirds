@@ -73,7 +73,7 @@ const buildChargesStr = async (charges): Promise<string> => {
   return chargesStr;
 };
 
-const getAge = (jailbirdData: string[]): number => {
+const getAge = (jailbirdData: string[]): number | null => {
   const ndx = jailbirdData.indexOf('Current Age:');
   if (ndx === -1) return null;
 
@@ -81,7 +81,7 @@ const getAge = (jailbirdData: string[]): number => {
   return Number.isNaN(age) ? null : age;
 };
 
-const buildJailbird = async (page): Promise<Jailbird> => {
+const buildJailbird = async (page): Promise<Jailbird | null> => {
   let jailbird: Jailbird | null = null;
 
   // scrape table data which contains jailbird details
@@ -95,7 +95,7 @@ const buildJailbird = async (page): Promise<Jailbird> => {
     const inmateId = getInmateIdStr(tableRowData);
 
     // build out charge strings for jailbird
-    const chargesArr: string[] = await page.$$('.col-12.table.table-striped.table-hover > h5', (h5s) =>
+    const chargesArr: string[] = await page.$$('.col-12.table.table-striped.table-hover > h5', (h5s: any) =>
       h5s.map((h5: any) => {
           return h5.innerText;
       })
