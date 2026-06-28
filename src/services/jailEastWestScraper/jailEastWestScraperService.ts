@@ -5,7 +5,7 @@ import { launchBrowser } from "../browserLaunchService";
 import { logMessage } from "../loggerService";
 import { clickButton } from "../pageInteractions";
 import { buildChargesStr } from "./chargesStringBuilderService";
-import { createMultipleJailbirds } from "../jailbirdService";
+import { createMultipleJailbirdsIfTheyDontExist } from "../jailbirdService";
 
 const JAIL_EAST_WEST = `${JAILS.JAIL_EAST}/${JAILS.JAIL_WEST}`
 
@@ -106,12 +106,25 @@ export const buildJailbirds = async (): Promise<IJailbird[]> => {
     throw new Error(e);
   }
 
-  // pick a random uppercase letter (A - Z)
-  const buttonText: string = getRandomLetter();
+  const letterButtons = await page.$$eval(
+    'input[id^="button"]',
+    buttons =>
+      buttons.map(button => ({
+        id: button.id,
+        letter: (button as HTMLInputElement).value || button.id.replace('button', '')
+      }))
+    );
 
-  // find and click the button on the page that has that letter text 
-  const LETTER_BUTTON_ID = `#button${buttonText}`
-  await clickButton(page, LETTER_BUTTON_ID);
+  const randomButton =
+  letterButtons[Math.floor(Math.random() * letterButtons.length)];
+
+  console.log(`Looking for: button with ID ${randomButton.id}`);
+
+
+  const button = await page.$(randomButton.id);
+  console.log("Found?", button !== null);
+
+  await clickButton(page, `#${randomButton.id}`);
   await page.waitForNetworkIdle();
 
   // get a list of all of the select links
@@ -137,5 +150,5 @@ export const buildJailbirds = async (): Promise<IJailbird[]> => {
     ]);
   }
 
-  return await createMultipleJailbirds(jailbirds);
+  return await createMultipleJailbirdsIfTheyDontExist(jailbirds);
 };

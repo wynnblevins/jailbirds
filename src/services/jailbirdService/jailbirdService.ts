@@ -25,6 +25,38 @@ const createMultipleJailbirds = async (
   return await Jailbird.insertMany(jailbirds);
 };
 
+const createMultipleJailbirdsIfTheyDontExist = async (
+  jailbirds: IJailbird[]
+): Promise<any[]> => {
+  if (jailbirds.length === 0) {
+    return [];
+  }
+
+  // Get all inmate IDs from the incoming jailbirds
+  const inmateIDs = jailbirds.map(jb => jb.inmateID);
+
+  // Find the inmate IDs that already exist
+  const existingJailbirds = await Jailbird.find(
+    { inmateID: { $in: inmateIDs } },
+    { inmateID: 1 }
+  );
+
+  const existingIDs = new Set(
+    existingJailbirds.map(jb => jb.inmateID)
+  );
+
+  // Keep only the jailbirds that don't already exist
+  const newJailbirds = jailbirds.filter(
+    jb => !existingIDs.has(jb.inmateID)
+  );
+
+  if (newJailbirds.length === 0) {
+    return [];
+  }
+
+  return await Jailbird.insertMany(newJailbirds);
+};
+
 /**
  * 
  * Does the same thing as createJailbird, but accepts an instance of
@@ -98,4 +130,5 @@ export {
   deleteOldJailbirdsFromFacility,
   updateJailbird,
   saveJailbird,
+  createMultipleJailbirdsIfTheyDontExist
 };

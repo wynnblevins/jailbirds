@@ -21,7 +21,7 @@ interface IJailbird {
   charges: string,
   picture: string,
   facility: string,
-  age: number,
+  age: number | undefined,
   timestamp: Date,
   isPosted: boolean,
   hashtags: string[]
@@ -54,23 +54,7 @@ const scrapeWebpages = async (): Promise<IJailbird[]> => {
     );
   }
 
-  // scrape the Henrico jail roster webpage
-  logMessage(
-    "Scraping Henrico jailbird web page...", 
-    JAILS.HENRICO_COUNTY_REGIONAL_JAIL
-  );
-
-  try {
-    const henricoJbsPromise = buildHenricoJailbirds();
-    scraperPromises.push(henricoJbsPromise);
-  } catch (e: any) {
-    logMessage(
-      "Error encountered while building Henrico jailbirds", 
-      JAILS.HENRICO_COUNTY_REGIONAL_JAIL
-    );
-  }
-  
-// scrape the jail east/west web pages
+  // scrape the jail east/west web pages
   logMessage(
     "Scraping Richmond Jail East/West webpage...",
     `${JAILS.JAIL_EAST}/${JAILS.JAIL_WEST}`

@@ -1,4 +1,8 @@
-import { _ } from "lodash";
+/**
+ * DEPRECATED, USE JAIL EAST/WEST SCRAPER SERVICE
+ */
+
+import _ = require("lodash")
 import { IJailbird } from "../../app";
 import { JAILS, JAIL_URLS } from "../../utils/strings";
 import { logMessage } from "../loggerService/loggerService";
