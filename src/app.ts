@@ -85,26 +85,19 @@ const scrapeWebpages = async (): Promise<IJailbird[]> => {
  * deletes older jailbirds to keep us from running out of space
  */
 const pruneDB = async () => {
-  const THIRTY_DAYS = 30;
   const ONE_YEAR = 365;
-
-  const thirtyDaysAgo = new Date(
-    new Date().setDate(new Date().getDate() - THIRTY_DAYS)
-  );
 
   const oneYearAgo = new Date(
     new Date().setDate(new Date().getDate() - ONE_YEAR)
   )
   
-  // get rid of Henrico jailbirds more than thirty days old
-  await deleteOldJailbirdsFromFacility(
-    JAILS.HENRICO_COUNTY_REGIONAL_JAIL,
-    thirtyDaysAgo
-  );
-
-  // get rid of Richmond jailbirds older than one year
   await deleteOldJailbirdsFromFacility(
     JAILS.RICHMOND_CITY_JAIL,
+    oneYearAgo,
+  );
+
+  await deleteOldJailbirdsFromFacility(
+    JAILS.HENRICO_COUNTY_REGIONAL_JAIL,
     oneYearAgo,
   );
 };
